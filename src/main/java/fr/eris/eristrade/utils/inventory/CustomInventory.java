@@ -21,10 +21,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class CustomInventory implements Listener {
@@ -77,14 +74,24 @@ public class CustomInventory implements Listener {
         return this;
     }
 
-    private void loadInventory() {
+    private boolean loadInventory() {
         byte inventorySize = this.inventorySize;
-        inventory = Bukkit.createInventory(null, inventorySize, ColorUtils.translate(inventoryName));
+        boolean hasInventoryChanged;
+        if(inventory == null || inventory.getSize() != inventorySize || !ColorUtils.translate(inventoryName).equals(inventory.getName())) {
+            inventory = Bukkit.createInventory(null, inventorySize, ColorUtils.translate(inventoryName));
+            hasInventoryChanged = true;
+        }
+        else {
+            inventory.clear();
+            hasInventoryChanged = false;
+        }
+
         if(items != null && !this.items.isEmpty())
             for(byte key : items.keySet()) {
                 inventory.setItem(key, items.get(key).getItem());
             }
         setToolbar(inventory);
+        return hasInventoryChanged;
     }
 
     private void setToolbar(Inventory inventory) {
@@ -100,19 +107,28 @@ public class CustomInventory implements Listener {
         HandlerList.unregisterAll(this);
     }
 
-    public void update(HumanEntity... newViewers) {
+    public void update(Player... newViewers) {
         final List<Player> playerWithOpenedInventory = new ArrayList<>();
         for(UUID playerUUID : currentViewers) {
             final Player player = Bukkit.getPlayer(playerUUID);
             playerWithOpenedInventory.add(player);
         }
-        loadInventory();
+        boolean hasInventoryChanged = loadInventory();
         for(Player player : playerWithOpenedInventory) {
-            player.openInventory(inventory);
+            if(hasInventoryChanged)
+                player.openInventory(inventory);
+            else player.updateInventory();
         }
-        if(newViewers != null)
-            for(HumanEntity newViewer : newViewers)
+        if(newViewers != null) {
+            List<Player> newViewersCopy = new ArrayList<>(Arrays.asList(newViewers));
+            for(Player currentViewers : playerWithOpenedInventory) {
+                newViewersCopy.remove(currentViewers);
+            }
+
+            for (Player newViewer : newViewersCopy) {
                 newViewer.openInventory(inventory);
+            }
+        }
     }
 
     /**

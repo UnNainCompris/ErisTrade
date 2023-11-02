@@ -100,4 +100,8 @@ public class TradeManager extends Manager {
         if(hasSendTradeRequest(from, to))
             tradeRequestCache.remove(from);
     }
+
+    public void removeTrade(Trade trade) {
+        currentTrade.remove(trade);
+    }
 }

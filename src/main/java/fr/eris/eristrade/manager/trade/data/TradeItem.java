@@ -1,6 +1,7 @@
 package fr.eris.eristrade.manager.trade.data;
 
 import fr.eris.eristrade.utils.ColorUtils;
+import fr.eris.eristrade.utils.ItemUtils;
 import fr.eris.eristrade.utils.item.ItemBuilder;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +21,9 @@ public class TradeItem {
     }
 
     public ItemStack buildForDisplay() {
-        return new ItemBuilder(item).setNbtValue("eristrade.itemkey", itemKey).setDisplayName(item.getItemMeta().getDisplayName()
+        String itemDisplayName = item.getItemMeta().getDisplayName();
+        if(itemDisplayName == null) itemDisplayName = ItemUtils.getItemName(item);
+        return new ItemBuilder(item).setNbtValue("eristrade.itemkey", itemKey).setDisplayName(itemDisplayName
                 + ColorUtils.translate(" &7(&8" + amount + "&7)")).setAmount(1).build();
     }
 

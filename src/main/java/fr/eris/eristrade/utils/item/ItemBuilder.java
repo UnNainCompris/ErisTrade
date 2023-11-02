@@ -23,7 +23,7 @@ public class ItemBuilder {
     }
 
     public ItemBuilder(ItemStack defaultItem) {
-        this.item = defaultItem;
+        this.item = defaultItem.clone();
     }
 
     public ItemBuilder setMaterial(Material material) {
@@ -116,12 +116,14 @@ public class ItemBuilder {
     }
 
     public ItemBuilder setNbtValue(String key, Object value) {
-        new NBTUtils(item).set(key, value);
+        item = new NBTUtils(item).set(key, value).build();
         return this;
     }
 
     public ItemBuilder clearNbtValue(String key) {
-        new NBTItem(item).removeKey(key);
+        NBTItem tempNbt = new NBTItem(item);
+        tempNbt.removeKey(key);
+        item = tempNbt.getItem();
         return this;
     }
 }

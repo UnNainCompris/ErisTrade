@@ -4,6 +4,7 @@ import fr.eris.eristrade.utils.inventory.CustomInventory;
 import fr.eris.eristrade.utils.item.ItemBuilder;
 import lombok.Getter;
 import lombok.Setter;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -44,7 +45,7 @@ public class TradeData {
         TradeItem targetItem = findTradeItemByKey(itemKey);
         if(targetItem == null) return RemoveItemError.ITEM_NOT_FOUND;
         if(!checkPlayerSpace(targetItem.getItem(), amount)) return RemoveItemError.NOT_ENOUGH_PLAYER_SPACE;
-
+        if(targetItem.getAmount() < amount) return RemoveItemError.INVALID_AMOUNT;
         ItemBuilder itemToGive = new ItemBuilder(targetItem.getItem());
         for(int remainingItemToGive = amount ; remainingItemToGive > 0 ; remainingItemToGive -= Math.min(targetItem.getItem().getMaxStackSize(), remainingItemToGive)) {
             itemToGive.setAmount(Math.min(targetItem.getItem().getMaxStackSize(), remainingItemToGive));
@@ -52,6 +53,8 @@ public class TradeData {
                 player.getInventory().addItem(itemToGive.build());
             else player.getLocation().getWorld().dropItem(player.getLocation().clone().add(0, 1, 0), itemToGive.build());
         }
+        if(targetItem.getAmount() == amount) currentTradedItem.remove(targetItem);
+        else targetItem.setAmount(targetItem.getAmount() - amount);
         acceptTrade = false;
         return RemoveItemError.NO_ERROR;
     }
@@ -59,16 +62,21 @@ public class TradeData {
     public boolean checkPlayerSpace(ItemStack item, int requireItemSpace) {
         int currentFoundSpace = 0;
         for(ItemStack currentItem : player.getInventory().getContents()) {
-            if(currentItem.isSimilar(item) && currentItem.getAmount() < currentItem.getMaxStackSize()) {
-                currentFoundSpace += currentItem.getMaxStackSize() - currentItem.getAmount();
-                if(currentFoundSpace >= requireItemSpace) return true; // avoid useless loop
+            if(currentItem == null || currentItem.getType() == Material.AIR) {
+                currentFoundSpace += item.getMaxStackSize();
             }
+            else if(currentItem.isSimilar(item) && currentItem.getAmount() < currentItem.getMaxStackSize()) {
+                currentFoundSpace += currentItem.getMaxStackSize() - currentItem.getAmount();
+            }
+
+            if(currentFoundSpace >= requireItemSpace) return true; // avoid useless loop
         }
         return false;
     }
 
     public TradeItem findTradeItemByKey(UUID itemKey) {
         for(TradeItem tradeItem : currentTradedItem) {
+            System.out.println(tradeItem.getItem().getType() + " -- " + tradeItem.getItemKey() + " -- " + itemKey);
             if(tradeItem.getItemKey().equals(itemKey)) return tradeItem;
         }
         return null;

@@ -85,12 +85,12 @@ public class Trade implements Listener {
 
     private void updatePlayerInventory(TradeData traderPlayerData, TradeData tradedPlayerData) {
         for(TradeItem tradeItem : traderPlayerData.getCurrentTradedItem()) {
-            int rawItemSlot = traderPlayerData.getCurrentTradedItem().indexOf(tradeItem) - 1;
+            int rawItemSlot = traderPlayerData.getCurrentTradedItem().indexOf(tradeItem);
             int itemSlot = (int) (rawItemSlot % 4 + Math.floor(rawItemSlot / 4f));
             traderPlayerData.getTradeInventory().setItem(itemSlot, tradeItem::buildForDisplay,
                     (event) -> {
-                        traderPlayerData.removeItem(getAmountOfItemWithClickType(tradeItem, event.getClick()),
-                                new NBTItem(event.getCurrentItem()).getUUID("eristrade.itemkey"));
+                        System.out.println(traderPlayerData.removeItem(getAmountOfItemWithClickType(tradeItem, event.getClick()),
+                                new NBTItem(event.getCurrentItem()).getUUID("eristrade.itemkey")));
                         updateInventory();
                     });
         }
@@ -106,14 +106,9 @@ public class Trade implements Listener {
         }
 
         for(TradeItem tradeItem : tradedPlayerData.getCurrentTradedItem()) {
-            int rawItemSlot = tradedPlayerData.getCurrentTradedItem().indexOf(tradeItem) - 1;
+            int rawItemSlot = tradedPlayerData.getCurrentTradedItem().indexOf(tradeItem);
             int itemSlot = (int) (5 + (rawItemSlot % 4 + Math.floor(rawItemSlot / 4f)));
-            traderPlayerData.getTradeInventory().setItem(itemSlot, tradeItem::buildForDisplay,
-                    (event) -> {
-                        tradedPlayerData.removeItem(getAmountOfItemWithClickType(tradeItem, event.getClick()),
-                                new NBTItem(event.getCurrentItem()).getUUID("eristrade.itemkey"));
-                        updateInventory();
-                    });
+            traderPlayerData.getTradeInventory().setItem(itemSlot, tradeItem::buildForDisplay, null);
         }
 
         traderPlayerData.getTradeInventory().addToolbarItem(1, () -> {
@@ -171,15 +166,18 @@ public class Trade implements Listener {
         for(ItemStack currentItem : inventory.getContents()) {
             if(item.isSimilar(currentItem)) amountFound += currentItem.getAmount();
         }
+        System.out.println("Amount of " + item.getType() + " found = " + amountFound + " (777)");
         if(amountFound == 0) return null;
         return new TradeItem(item, amountFound);
     }
 
     private boolean hasEnoughTradeItem(TradeItem tradeItem, Player player) {
         int amountFound = 0;
+        if(tradeItem == null) return false;
         for(ItemStack currentItem : player.getInventory().getContents()) {
             if(tradeItem.getItem().isSimilar(currentItem)) amountFound += currentItem.getAmount();
         }
+        System.out.println("Amount of " + tradeItem.getItem().getType() + " found = " + amountFound + " (000)");
         return amountFound >= tradeItem.getAmount();
     }
 
@@ -189,14 +187,16 @@ public class Trade implements Listener {
         System.out.println("b");
         int amountToRemove = tradeItem.getAmount();
         System.out.println("c");
-        for(ItemStack currentItem : player.getInventory().getContents()) {
+        for(int currentSlot = 0 ;  currentSlot < player.getInventory().getSize() ; currentSlot++) {
             System.out.println("d");
+            ItemStack currentItem = player.getInventory().getItem(currentSlot);
             if(tradeItem.getItem().isSimilar(currentItem)) {
                 System.out.println("e");
                 int itemAmount = currentItem.getAmount();
                 if(itemAmount > amountToRemove) currentItem.setAmount(itemAmount - amountToRemove);
                 else currentItem.setType(Material.AIR);
                 amountToRemove -= Math.min(amountToRemove, itemAmount);
+                player.getInventory().setItem(currentSlot, currentItem);
                 if(amountToRemove <= 0) break;
             }
         }
@@ -222,10 +222,14 @@ public class Trade implements Listener {
         ItemStack item = event.getCurrentItem();
         if(item == null) return;
         TradeItem tradeItemFromPlayer = getItemAsTradeItemFromInventory(item, player.getInventory());
+        if(tradeItemFromPlayer == null) return;
+        int amount = getAmountOfItemWithClickType(tradeItemFromPlayer, event.getClick());
+        if(amount <= 0) return;
+        tradeItemFromPlayer.setAmount(amount);
         System.out.println("0");
         if(removeItemFromTradeItemInPlayerInventory(tradeItemFromPlayer, player)) {
             System.out.println("1");
-            playerData.addNewItem(item, getAmountOfItemWithClickType(tradeItemFromPlayer, event.getClick()));
+            playerData.addNewItem(item, tradeItemFromPlayer.getAmount());
             firstPlayer.setAcceptTrade(false);
             secondPlayer.setAcceptTrade(false);
             updateInventory();
@@ -305,12 +309,13 @@ public class Trade implements Listener {
         firstPlayer.getTradeInventory().destroy();
         secondPlayer.getTradeInventory().destroy();
         tradeAcceptTask.cancel();
+        ErisTrade.getTradeManager().removeTrade(this);
         HandlerList.unregisterAll(this);
     }
 
     public void addTradeItemAndDropOverflow(List<TradeItem> toGive, Player target) {
         for(TradeItem currentTradeItem : toGive) {
-            for(int amountToGive = 0 ; currentTradeItem.getAmount() > 0 ; amountToGive = Math.min(currentTradeItem.getItem().getMaxStackSize(), currentTradeItem.getAmount())) {
+            for(int amountToGive = 0 ; currentTradeItem.getAmount() != 0 ; amountToGive = Math.min(currentTradeItem.getItem().getMaxStackSize(), currentTradeItem.getAmount())) {
                 ItemStack currentItemStackToGive = currentTradeItem.retrieveItem(amountToGive);
                 if(target.getInventory().firstEmpty() != -1)
                     target.getInventory().addItem(currentItemStackToGive);

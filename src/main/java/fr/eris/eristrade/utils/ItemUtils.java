@@ -1,6 +1,7 @@
 package fr.eris.eristrade.utils;
 
 import org.bukkit.Material;
+import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -94,5 +95,10 @@ public class ItemUtils {
 
     public static ItemStack infoItem(String thingToSay) {
         return infoItem(Material.PAPER, thingToSay, 25);
+    }
+
+    public static String getItemName(ItemStack item) {
+        net.minecraft.server.v1_8_R3.ItemStack nmsStack = CraftItemStack.asNMSCopy(item);
+        return ColorUtils.strip(nmsStack.getItem().a(nmsStack));
     }
 }
