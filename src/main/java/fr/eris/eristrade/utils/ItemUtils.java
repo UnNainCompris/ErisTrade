@@ -99,6 +99,6 @@ public class ItemUtils {
 
     public static String getItemName(ItemStack item) {
         net.minecraft.server.v1_8_R3.ItemStack nmsStack = CraftItemStack.asNMSCopy(item);
-        return ColorUtils.strip(nmsStack.getItem().a(nmsStack));
+        return ColorUtils.translate("&f" + nmsStack.getItem().a(nmsStack));
     }
 }

@@ -13,7 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.logging.Level;
 
-@ErisConfiguration(version = "Beta - 0.1", permissionPrefix = "eristrade", name = "ErisTrade")
+@ErisConfiguration(version = "Beta - 0.5", permissionPrefix = "eristrade", name = "ErisTrade")
 public class ErisTrade extends JavaPlugin {
 
     @Getter private static ErisTrade instance;

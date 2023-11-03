@@ -16,8 +16,7 @@ public class TradeData {
     @Getter private final Player player;
     @Getter private final CustomInventory tradeInventory;
     @Getter private final List<TradeItem> currentTradedItem;
-    @Getter @Setter
-    private long tradedMoney;
+    @Getter @Setter private long tradedMoney;
     @Getter @Setter private boolean canClose;
     @Getter @Setter private boolean acceptTrade;
 
@@ -25,22 +24,27 @@ public class TradeData {
         this.player = player;
         this.tradeInventory = new CustomInventory().setInventoryName(inventoryName).setInventorySize(54);
         this.currentTradedItem = new ArrayList<>();
+        this.tradedMoney = 0;
     }
 
-    public AddItemError addNewItem(ItemStack item, int amount) {
+    public AddItemError addNewItem(ItemStack item, int amount, Trade trade) {
         TradeItem tradeItem = findTradeItemByItem(item);
         if(tradeItem != null) {
             tradeItem.setAmount(tradeItem.getAmount() + amount);
+            trade.putTradeItemHasEdited(tradeItem);
             return AddItemError.NO_ERROR;
         }
-        if(currentTradedItem.size() > 20) return AddItemError.TOO_MANY_ITEM;
+        System.out.println(currentTradedItem.size());
+        if(currentTradedItem.size() >= 20)
+            return AddItemError.TOO_MANY_ITEM;
         tradeItem = new TradeItem(item, amount);
         currentTradedItem.add(tradeItem);
         acceptTrade = false;
+        trade.putTradeItemHasEdited(tradeItem);
         return AddItemError.NO_ERROR;
     }
 
-    public RemoveItemError removeItem(int amount, UUID itemKey) {
+    public RemoveItemError removeItem(int amount, UUID itemKey, Trade trade) {
         if(amount <= 0) return RemoveItemError.INVALID_AMOUNT;
         TradeItem targetItem = findTradeItemByKey(itemKey);
         if(targetItem == null) return RemoveItemError.ITEM_NOT_FOUND;
@@ -56,6 +60,7 @@ public class TradeData {
         if(targetItem.getAmount() == amount) currentTradedItem.remove(targetItem);
         else targetItem.setAmount(targetItem.getAmount() - amount);
         acceptTrade = false;
+        trade.putTradeItemHasEdited(targetItem);
         return RemoveItemError.NO_ERROR;
     }
 
@@ -76,7 +81,6 @@ public class TradeData {
 
     public TradeItem findTradeItemByKey(UUID itemKey) {
         for(TradeItem tradeItem : currentTradedItem) {
-            System.out.println(tradeItem.getItem().getType() + " -- " + tradeItem.getItemKey() + " -- " + itemKey);
             if(tradeItem.getItemKey().equals(itemKey)) return tradeItem;
         }
         return null;
@@ -96,7 +100,7 @@ public class TradeData {
         NO_ERROR;
     }
 
-    private enum AddItemError {
+    enum AddItemError {
         TOO_MANY_ITEM,
         NO_ERROR;
     }

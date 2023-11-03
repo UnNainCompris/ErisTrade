@@ -9,6 +9,7 @@ import fr.eris.eristrade.utils.Tuple;
 import fr.eris.eristrade.utils.manager.Manager;
 import lombok.Getter;
 import net.md_5.bungee.api.chat.ClickEvent;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -68,6 +69,8 @@ public class TradeManager extends Manager {
     }
 
     public void startTrade(Player requester, Player requested) {
+        requester = Bukkit.getPlayer(requester.getUniqueId()); // use to update the player (avoid dupe)
+        requested = Bukkit.getPlayer(requested.getUniqueId()); // use to update the player (avoid dupe)
         Trade trade = new Trade(requester, requested);
         currentTrade.add(trade);
         tradeRequestCache.remove(requester);

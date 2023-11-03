@@ -41,26 +41,55 @@ public class Trade implements Listener {
 
     private boolean isTradeCanceled, isTradeFinished;
     private int tickSinceTradeAccept = 0;
-    private BukkitTask tradeAcceptTask; // a task that schedule every tick from the start of the trade
+    private int tradeTickCounter = 0;
+    private BukkitTask tradeTask; // a task that schedule every tick from the start of the trade
+    private final List<TradeItem> recentlyUpdatedItem;
 
     public Trade(Player firstPlayer, Player secondPlayer) {
         this.firstPlayer = new TradeData(firstPlayer, "&7Trade with: &6" + secondPlayer.getName());
         this.secondPlayer = new TradeData(secondPlayer, "&7Trade with: &6" + firstPlayer.getName());
-        tradeAcceptTask = BukkitTasks.syncTimer(this::tradeTask, 1, 1);
+        this.recentlyUpdatedItem = new ArrayList<>();
+        tradeTask = BukkitTasks.syncTimer(this::tradeTask, 1, 1);
         Bukkit.getServer().getPluginManager().registerEvents(this, ErisTrade.getInstance());
         updateInventory();
     }
 
     public void tradeTask() {
+        tradeTickCounter++;
         if(isTradeCanceled || isTradeFinished) {
-            tradeAcceptTask.cancel();
+            tradeTask.cancel();
             return;
         }
+        for(TradeItem currentItem : new ArrayList<>(recentlyUpdatedItem)) {
+            if(tradeTickCounter - currentItem.getLastEditTick() > 30) {
+                recentlyUpdatedItem.remove(currentItem);
+                currentItem.setDisplayHasEdited(false);
+                updateInventory();
+                continue;
+            }
+            if((tradeTickCounter - currentItem.getLastEditTick()) % 5 == 0) {
+                currentItem.setDisplayHasEdited(!currentItem.isDisplayHasEdited());
+                updateInventory();
+            }
+        }
+
         if(!firstPlayer.isAcceptTrade() || !secondPlayer.isAcceptTrade()) {
+            if(tickSinceTradeAccept != 0) {
+                updateSeparator(firstPlayer);
+                firstPlayer.getTradeInventory().update(firstPlayer.getPlayer());
+                updateSeparator(secondPlayer);
+                secondPlayer.getTradeInventory().update(secondPlayer.getPlayer());
+            }
             tickSinceTradeAccept = 0;
             return;
         }
         tickSinceTradeAccept++;
+        if(tickSinceTradeAccept % 20 == 0) {
+            updateSeparator(firstPlayer);
+            firstPlayer.getTradeInventory().update(firstPlayer.getPlayer());
+            updateSeparator(secondPlayer);
+            secondPlayer.getTradeInventory().update(secondPlayer.getPlayer());
+        }
         if(tickSinceTradeAccept == 100) {
             finishTrade();
         }
@@ -83,36 +112,45 @@ public class Trade implements Listener {
         updatePlayerInventory(secondPlayer, firstPlayer);
     }
 
-    private void updatePlayerInventory(TradeData traderPlayerData, TradeData tradedPlayerData) {
-        for(TradeItem tradeItem : traderPlayerData.getCurrentTradedItem()) {
-            int rawItemSlot = traderPlayerData.getCurrentTradedItem().indexOf(tradeItem);
-            int itemSlot = (int) (rawItemSlot % 4 + Math.floor(rawItemSlot / 4f));
-            traderPlayerData.getTradeInventory().setItem(itemSlot, tradeItem::buildForDisplay,
-                    (event) -> {
-                        System.out.println(traderPlayerData.removeItem(getAmountOfItemWithClickType(tradeItem, event.getClick()),
-                                new NBTItem(event.getCurrentItem()).getUUID("eristrade.itemkey")));
-                        updateInventory();
-                    });
-        }
-
+    public void updateSeparator(TradeData traderPlayerData) {
         List<Integer> separatorSlotList = Arrays.asList(4, 13, 22, 31, 40);
         for(int slot : separatorSlotList) { // separator between the 2 trade
             final short itemColor;
-            if(separatorSlotList.indexOf(slot) < (100 - tickSinceTradeAccept) / 20) itemColor = ItemCache.ItemColor.LIME; // TODO: 23/10/2023
-            else itemColor = ItemCache.ItemColor.GRAY;
+            if(separatorSlotList.size() - 1 - separatorSlotList.indexOf(slot) < (100 - tickSinceTradeAccept) / 20) itemColor = ItemCache.ItemColor.GRAY; // TODO: 23/10/2023
+            else itemColor = ItemCache.ItemColor.LIME;
 
             traderPlayerData.getTradeInventory().setItem(slot,
                     () -> ItemBuilder.placeHolders(Material.STAINED_GLASS_PANE, itemColor, false).build(), null);
         }
+    }
+
+    private void updatePlayerInventory(TradeData traderPlayerData, TradeData tradedPlayerData) {
+        for(TradeItem tradeItem : traderPlayerData.getCurrentTradedItem()) {
+            int rawItemSlot = traderPlayerData.getCurrentTradedItem().indexOf(tradeItem);
+            int itemSlot = (int) (rawItemSlot % 4 + (Math.floor(rawItemSlot / 4f) * 9));
+            traderPlayerData.getTradeInventory().setItem(itemSlot, tradeItem::buildForDisplay,
+                    (event) -> {
+                        traderPlayerData.removeItem(getAmountOfItemWithClickType(tradeItem, event.getClick()),
+                                new NBTItem(event.getCurrentItem()).getUUID("eristrade.itemkey"), this);
+                        updateInventory();
+                    });
+        }
+
+        updateSeparator(traderPlayerData);
 
         for(TradeItem tradeItem : tradedPlayerData.getCurrentTradedItem()) {
             int rawItemSlot = tradedPlayerData.getCurrentTradedItem().indexOf(tradeItem);
-            int itemSlot = (int) (5 + (rawItemSlot % 4 + Math.floor(rawItemSlot / 4f)));
+            int itemSlot = (int) (5 + (rawItemSlot % 4 + (Math.floor(rawItemSlot / 4f) * 9)));
             traderPlayerData.getTradeInventory().setItem(itemSlot, tradeItem::buildForDisplay, null);
         }
 
         traderPlayerData.getTradeInventory().addToolbarItem(1, () -> {
-            if(traderPlayerData.isAcceptTrade())
+            if(traderPlayerData.getCurrentTradedItem().isEmpty() && tradedPlayerData.getCurrentTradedItem().isEmpty()
+               && traderPlayerData.getTradedMoney() == 0 && tradedPlayerData.getTradedMoney() == 0) {
+                return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.GRAY, false)
+                        .setDisplayName("&7You cannot trade nothing on both side !").build();
+            }
+            else if(traderPlayerData.isAcceptTrade())
                 return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.LIME, false)
                     .setDisplayName("&cClick here to cancel the trade !").build();
             else return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.RED, false)
@@ -123,7 +161,12 @@ public class Trade implements Listener {
         }, true);
 
         traderPlayerData.getTradeInventory().addToolbarItem(9, () -> {
-            if(tradedPlayerData.isAcceptTrade())
+            if(traderPlayerData.getCurrentTradedItem().isEmpty() && tradedPlayerData.getCurrentTradedItem().isEmpty()
+                    && traderPlayerData.getTradedMoney() == 0 && tradedPlayerData.getTradedMoney() == 0) {
+                return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.GRAY, false)
+                        .setDisplayName("&7You cannot trade nothing on both side !").build();
+            }
+            else if(tradedPlayerData.isAcceptTrade())
                 return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.LIME, false)
                         .setDisplayName("&a" + tradedPlayerData.getPlayer().getName() + " has accept the trade !").build();
             else return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.RED, false)
@@ -166,7 +209,6 @@ public class Trade implements Listener {
         for(ItemStack currentItem : inventory.getContents()) {
             if(item.isSimilar(currentItem)) amountFound += currentItem.getAmount();
         }
-        System.out.println("Amount of " + item.getType() + " found = " + amountFound + " (777)");
         if(amountFound == 0) return null;
         return new TradeItem(item, amountFound);
     }
@@ -177,21 +219,15 @@ public class Trade implements Listener {
         for(ItemStack currentItem : player.getInventory().getContents()) {
             if(tradeItem.getItem().isSimilar(currentItem)) amountFound += currentItem.getAmount();
         }
-        System.out.println("Amount of " + tradeItem.getItem().getType() + " found = " + amountFound + " (000)");
         return amountFound >= tradeItem.getAmount();
     }
 
     private boolean removeItemFromTradeItemInPlayerInventory(TradeItem tradeItem, Player player) {
-        System.out.println("a");
         if(!hasEnoughTradeItem(tradeItem, player)) return false;
-        System.out.println("b");
         int amountToRemove = tradeItem.getAmount();
-        System.out.println("c");
         for(int currentSlot = 0 ;  currentSlot < player.getInventory().getSize() ; currentSlot++) {
-            System.out.println("d");
             ItemStack currentItem = player.getInventory().getItem(currentSlot);
             if(tradeItem.getItem().isSimilar(currentItem)) {
-                System.out.println("e");
                 int itemAmount = currentItem.getAmount();
                 if(itemAmount > amountToRemove) currentItem.setAmount(itemAmount - amountToRemove);
                 else currentItem.setType(Material.AIR);
@@ -200,7 +236,6 @@ public class Trade implements Listener {
                 if(amountToRemove <= 0) break;
             }
         }
-        System.out.println("f" + amountToRemove);
         return amountToRemove <= 0;
     }
 
@@ -226,14 +261,20 @@ public class Trade implements Listener {
         int amount = getAmountOfItemWithClickType(tradeItemFromPlayer, event.getClick());
         if(amount <= 0) return;
         tradeItemFromPlayer.setAmount(amount);
-        System.out.println("0");
+        if(playerData.getCurrentTradedItem().size() >= 20) return;
         if(removeItemFromTradeItemInPlayerInventory(tradeItemFromPlayer, player)) {
-            System.out.println("1");
-            playerData.addNewItem(item, tradeItemFromPlayer.getAmount());
+            if(playerData.addNewItem(item, tradeItemFromPlayer.getAmount(), this) != TradeData.AddItemError.NO_ERROR)
+                return;
             firstPlayer.setAcceptTrade(false);
             secondPlayer.setAcceptTrade(false);
             updateInventory();
         }
+    }
+
+    public void putTradeItemHasEdited(TradeItem tradeItem) {
+        tradeItem.setLastEditTick(tradeTickCounter);
+        if(!recentlyUpdatedItem.contains(tradeItem))
+            recentlyUpdatedItem.add(tradeItem);
     }
 
     @EventHandler
@@ -308,7 +349,7 @@ public class Trade implements Listener {
     public void destroy() {
         firstPlayer.getTradeInventory().destroy();
         secondPlayer.getTradeInventory().destroy();
-        tradeAcceptTask.cancel();
+        tradeTask.cancel();
         ErisTrade.getTradeManager().removeTrade(this);
         HandlerList.unregisterAll(this);
     }
