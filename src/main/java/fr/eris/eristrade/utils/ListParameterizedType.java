@@ -1,4 +1,4 @@
-package fr.eris.eristrade.utils.file;
+package fr.eris.eristrade.utils;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

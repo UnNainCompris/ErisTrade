@@ -1,5 +1,7 @@
-package fr.eris.eristrade.utils;
+package fr.eris.eristrade.utils.item;
 
+import fr.eris.eristrade.utils.ColorUtils;
+import fr.eris.eristrade.utils.StringUtils;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.enchantments.Enchantment;

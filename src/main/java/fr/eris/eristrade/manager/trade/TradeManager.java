@@ -5,8 +5,8 @@ import fr.eris.eristrade.manager.trade.data.Trade;
 import fr.eris.eristrade.utils.BukkitTasks;
 import fr.eris.eristrade.utils.ColorUtils;
 import fr.eris.eristrade.utils.MessageBuilder;
-import fr.eris.eristrade.utils.Tuple;
 import fr.eris.eristrade.utils.manager.Manager;
+import fr.eris.eristrade.utils.storage.Tuple;
 import lombok.Getter;
 import net.md_5.bungee.api.chat.ClickEvent;
 import org.bukkit.Bukkit;
@@ -19,7 +19,7 @@ import java.util.List;
 
 public class TradeManager extends Manager {
 
-    private final HashMap<Player, Tuple<Long, Player>> tradeRequestCache = new HashMap<>();
+    @Getter private final HashMap<Player, Tuple<Long, Player>> tradeRequestCache = new HashMap<>();
     private final List<Trade> currentTrade = new ArrayList<>();
 
     private BukkitTask tradeRequestUpdaterTask;
@@ -88,7 +88,7 @@ public class TradeManager extends Manager {
         from.sendMessage(ColorUtils.translate("&7You send a trade request to " + to.getName() + " !"));
         MessageBuilder message = MessageBuilder.builder().addText("&7You get a trade request from " + from.getName() + " ! \n\n")
                 .addText("  &7|   ")
-                .addClickEvent("&a&l[ACCEPT]", ClickEvent.Action.RUN_COMMAND, "/trade ask " + from.getName())
+                .addClickEvent("&a&l[ACCEPT]", ClickEvent.Action.RUN_COMMAND, "/trade " + from.getName())
                 .addText("    ")
                 .addClickEvent("&c&l[CANCEL]", ClickEvent.Action.RUN_COMMAND, "/trade cancel " + from.getName())
                 .addText("    &7|");
@@ -100,8 +100,10 @@ public class TradeManager extends Manager {
     }
 
     public void removeTradeRequest(Player from, Player to) {
-        if(hasSendTradeRequest(from, to))
-            tradeRequestCache.remove(from);
+        if(hasSendTradeRequest(from, to)) {
+            to.sendMessage(ColorUtils.translate("&7The trade request was canceled !"));
+            from.sendMessage(ColorUtils.translate("&7The trade request was canceled !"));
+        }
     }
 
     public void removeTrade(Trade trade) {

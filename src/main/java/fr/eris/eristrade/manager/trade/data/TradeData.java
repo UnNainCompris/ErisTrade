@@ -1,5 +1,6 @@
 package fr.eris.eristrade.manager.trade.data;
 
+import fr.eris.eristrade.manager.trade.inventory.TradeInventory;
 import fr.eris.eristrade.utils.inventory.CustomInventory;
 import fr.eris.eristrade.utils.item.ItemBuilder;
 import lombok.Getter;
@@ -14,24 +15,26 @@ import java.util.UUID;
 
 public class TradeData {
     @Getter private final Player player;
-    @Getter private final CustomInventory tradeInventory;
+    @Getter private final TradeInventory tradeInventory;
     @Getter private final List<TradeItem> currentTradedItem;
     @Getter @Setter private long tradedMoney;
     @Getter @Setter private boolean canClose;
     @Getter @Setter private boolean acceptTrade;
+    private final Trade targetTrade;
 
-    protected TradeData(Player player, String inventoryName) {
+    protected TradeData(Player player, String inventoryName, Trade targetTrade) {
         this.player = player;
-        this.tradeInventory = new CustomInventory().setInventoryName(inventoryName).setInventorySize(54);
+        this.tradeInventory = new TradeInventory(inventoryName, player, this, targetTrade);
         this.currentTradedItem = new ArrayList<>();
         this.tradedMoney = 0;
+        this.targetTrade = targetTrade;
     }
 
-    public AddItemError addNewItem(ItemStack item, int amount, Trade trade) {
+    public AddItemError addNewItem(ItemStack item, int amount) {
         TradeItem tradeItem = findTradeItemByItem(item);
         if(tradeItem != null) {
             tradeItem.setAmount(tradeItem.getAmount() + amount);
-            trade.putTradeItemHasEdited(tradeItem);
+            targetTrade.putTradeItemHasEdited(tradeItem);
             return AddItemError.NO_ERROR;
         }
         System.out.println(currentTradedItem.size());
@@ -40,11 +43,11 @@ public class TradeData {
         tradeItem = new TradeItem(item, amount);
         currentTradedItem.add(tradeItem);
         acceptTrade = false;
-        trade.putTradeItemHasEdited(tradeItem);
+        targetTrade.putTradeItemHasEdited(tradeItem);
         return AddItemError.NO_ERROR;
     }
 
-    public RemoveItemError removeItem(int amount, UUID itemKey, Trade trade) {
+    public RemoveItemError removeItem(int amount, UUID itemKey) {
         if(amount <= 0) return RemoveItemError.INVALID_AMOUNT;
         TradeItem targetItem = findTradeItemByKey(itemKey);
         if(targetItem == null) return RemoveItemError.ITEM_NOT_FOUND;
@@ -60,7 +63,7 @@ public class TradeData {
         if(targetItem.getAmount() == amount) currentTradedItem.remove(targetItem);
         else targetItem.setAmount(targetItem.getAmount() - amount);
         acceptTrade = false;
-        trade.putTradeItemHasEdited(targetItem);
+        targetTrade.putTradeItemHasEdited(targetItem);
         return RemoveItemError.NO_ERROR;
     }
 
@@ -93,7 +96,7 @@ public class TradeData {
         return null;
     }
 
-    enum RemoveItemError {
+    public enum RemoveItemError {
         ITEM_NOT_FOUND,
         INVALID_AMOUNT,
         NOT_ENOUGH_PLAYER_SPACE,

@@ -1,4 +1,4 @@
-package fr.eris.eristrade.utils.manager.handler;
+package fr.eris.eristrade.utils.handler;
 
 import fr.eris.eristrade.utils.manager.Priority;
 

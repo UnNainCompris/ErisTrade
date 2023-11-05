@@ -2,7 +2,6 @@ package fr.eris.eristrade.utils.item;
 
 import de.tr7zw.changeme.nbtapi.NBTItem;
 import fr.eris.eristrade.utils.ColorUtils;
-import fr.eris.eristrade.utils.NBTUtils;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
@@ -91,7 +90,7 @@ public class ItemBuilder {
     }
 
     public static ItemBuilder placeHolders(Material item, short color, boolean glowing) {
-        final ItemBuilder itemBuilder = new ItemBuilder().setMaterial(item).setDisplayName(" ").setAmount(1).setDurability(color);
+        final ItemBuilder itemBuilder = new ItemBuilder().setMaterial(item).setDisplayName("").setAmount(1).setDurability(color);
         if(glowing) itemBuilder.addEnchant(Enchantment.ARROW_DAMAGE, 1).addItemFlag(ItemFlag.HIDE_ENCHANTS);
         return itemBuilder;
     }

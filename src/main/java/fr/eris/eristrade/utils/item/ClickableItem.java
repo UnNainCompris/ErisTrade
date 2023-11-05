@@ -1,38 +1,37 @@
 package fr.eris.eristrade.utils.item;
 
-import lombok.Getter;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
 public class ClickableItem {
 
-    @Getter private Item itemInterface;
-    @Getter private ActionOnClick actionInterface;
+    private Item item;
+    private ActionOnClick action;
 
-    public ClickableItem(Item itemInterface, ActionOnClick actionInterface) {
-        this.itemInterface = itemInterface;
-        this.actionInterface = actionInterface;
+    public ClickableItem(Item item, ActionOnClick action) {
+        this.item = item;
+        this.action = action;
     }
 
-    public ClickableItem(Item itemInterface) {
-        this(itemInterface, null);
+    public ClickableItem(Item item) {
+        this(item, null);
     }
 
     public void changeAction(ActionOnClick newAction) {
-        this.actionInterface = newAction;
+        this.action = newAction;
     }
 
     public void changeItem(Item newItem) {
-        this.itemInterface = newItem;
+        this.item = newItem;
     }
 
     public void executeAction(InventoryClickEvent clickEvent) {
-        if(actionInterface == null) return;
-        actionInterface.onClickEvent(clickEvent);
+        if(action == null) return;
+        action.onClickEvent(clickEvent);
     }
 
     public ItemStack getItem() {
-        return itemInterface.getItem();
+        return item.getItem();
     }
 
     public interface ActionOnClick {

@@ -3,7 +3,7 @@ package fr.eris.eristrade;
 import fr.eris.eristrade.manager.commands.CommandManager;
 import fr.eris.eristrade.manager.impl.ImplementationManager;
 import fr.eris.eristrade.manager.trade.TradeManager;
-import fr.eris.eristrade.utils.file.FileUtils;
+import fr.eris.eristrade.utils.FileUtils;
 import fr.eris.eristrade.utils.manager.ManagerEnabler;
 import fr.eris.eristrade.utils.manager.ManagerPriority;
 import fr.eris.eristrade.utils.manager.Priority;

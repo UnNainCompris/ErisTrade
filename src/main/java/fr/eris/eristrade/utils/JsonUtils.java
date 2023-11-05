@@ -1,4 +1,4 @@
-package fr.eris.eristrade.utils.file;
+package fr.eris.eristrade.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

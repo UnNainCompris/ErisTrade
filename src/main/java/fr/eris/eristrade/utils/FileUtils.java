@@ -1,4 +1,4 @@
-package fr.eris.eristrade.utils.file;
+package fr.eris.eristrade.utils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

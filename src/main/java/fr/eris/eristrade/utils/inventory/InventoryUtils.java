@@ -1,4 +1,4 @@
-package fr.eris.eristrade.utils;
+package fr.eris.eristrade.utils.inventory;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;

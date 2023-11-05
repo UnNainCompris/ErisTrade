@@ -1,31 +1,62 @@
 package fr.eris.eristrade.manager.trade.commands;
 
 import fr.eris.eristrade.ErisTrade;
-import fr.eris.eristrade.manager.commands.SubCommand;
+import fr.eris.eristrade.manager.commands.ErisCommand;
+import fr.eris.eristrade.manager.commands.ErisSubCommand;
+import fr.eris.eristrade.manager.commands.args.CommandArgument;
+import fr.eris.eristrade.manager.commands.args.PlayerCommandArgument;
+import fr.eris.eristrade.manager.commands.args.StringCommandArgument;
 import fr.eris.eristrade.utils.ColorUtils;
+import fr.eris.eristrade.utils.PlayerUtils;
+import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class TradeCancelCommand extends SubCommand {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class TradeCancelCommand extends ErisSubCommand {
     public TradeCancelCommand() {
-        super("cancel", "eristrade.trade.cancel", true);
+        super("cancel", null, ErisTrade.getConfiguration().permissionPrefix() + ".trade.cancel",
+                true, false);
     }
 
     @Override
-    public void execute(CommandSender sender, String[] args) {
+    public void execute(CommandSender sender, List<CommandArgument<?>> args) {
         Player player = (Player) sender;
-        Player target = null;
-        if(args == null || args.length == 0) {
-            player.sendMessage(ColorUtils.translate("&c[x] &7Missing argument !"));
-            return;
-        } if((target = Bukkit.getPlayer(args[0])) == null) {
-            player.sendMessage(ColorUtils.translate("&c[x] &7" + args[0] + " &7is not online !"));
-            return;
-        } if(!ErisTrade.getTradeManager().hasSendTradeRequest(player, target)) {
+        Player target = args.get(0).convert(Player.class).getValue();
+        System.out.println(player.getName() + " -- " + target.getName());
+         if(!ErisTrade.getTradeManager().hasSendTradeRequest(player, target)) {
             player.sendMessage(ColorUtils.translate("&c[x] &7" + target.getDisplayName() + " &7is already not invited to trade !"));
             return;
         }
         ErisTrade.getTradeManager().removeTradeRequest(player, target);
+    }
+
+    @Override
+    public void error(CommandSender sender, ErisCommand.CommandExecutionError errorCode, String[] argsValue, String targetedArgs, CommandArgument<?> targetedCommandArguments) {
+        if(errorCode == ErisCommand.CommandExecutionError.INVALID_ARGS) {
+            if (targetedCommandArguments instanceof PlayerCommandArgument) {
+                sender.sendMessage(ColorUtils.translate("&c[x] &7" + targetedArgs + " &7doesn't send you (or you sent to him) a trade request !"));
+                return;
+            }
+        }
+    }
+
+    @Override
+    public @NonNull List<CommandArgument<?>> registerCommandArgument() {
+        return Collections.singletonList(new PlayerCommandArgument((args) -> getPlayerThatAskTradeTo((CommandSender) args[0]), true, false));
+    }
+
+    public List<String> getPlayerThatAskTradeTo(CommandSender sender) {
+        List<String> askerList = new ArrayList<>();
+        if(!(sender instanceof Player)) return askerList;
+        Player player = (Player) sender;
+        for(Player key : ErisTrade.getTradeManager().getTradeRequestCache().keySet()) {
+            if(player.equals(ErisTrade.getTradeManager().getTradeRequestCache().get(key).getSecond())) askerList.add(key.getName());
+        }
+        return askerList;
     }
 }

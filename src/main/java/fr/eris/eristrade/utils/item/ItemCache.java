@@ -47,5 +47,4 @@ public class ItemCache {
         public static final short RED = 14;
         public static final short BLACK = 15;
     }
-
 }

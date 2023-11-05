@@ -1,4 +1,4 @@
-package fr.eris.eristrade.utils;
+package fr.eris.eristrade.utils.item;
 
 import de.tr7zw.changeme.nbtapi.NBTItem;
 import org.bukkit.inventory.ItemStack;

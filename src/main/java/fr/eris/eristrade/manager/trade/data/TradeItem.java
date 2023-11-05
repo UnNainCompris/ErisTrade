@@ -1,9 +1,9 @@
 package fr.eris.eristrade.manager.trade.data;
 
 import fr.eris.eristrade.utils.ColorUtils;
-import fr.eris.eristrade.utils.ItemUtils;
 import fr.eris.eristrade.utils.item.ItemBuilder;
 import fr.eris.eristrade.utils.item.ItemCache;
+import fr.eris.eristrade.utils.item.ItemUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Material;

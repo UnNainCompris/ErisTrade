@@ -3,7 +3,6 @@ package fr.eris.eristrade.utils.inventory;
 import fr.eris.eristrade.ErisTrade;
 import fr.eris.eristrade.utils.BukkitTasks;
 import fr.eris.eristrade.utils.ColorUtils;
-import fr.eris.eristrade.utils.InventoryUtils;
 import fr.eris.eristrade.utils.StringUtils;
 import fr.eris.eristrade.utils.item.ClickableItem;
 import fr.eris.eristrade.utils.item.ItemCache;
@@ -54,13 +53,13 @@ public class ExtendInventory implements Listener {
         return this;
     }
 
-    public ExtendInventory addItem(ClickableItem.Item item, ClickableItem.ActionOnClick actionOnClick) {
-        items.add(new ClickableItem(item, actionOnClick));
+    public ExtendInventory addItem(ClickableItem item) {
+        items.add(item);
         return this;
     }
 
-    public ExtendInventory removeItem(ClickableItem.Item item, ClickableItem.ActionOnClick actionOnClick) {
-        items.remove(new ClickableItem(item, actionOnClick));
+    public ExtendInventory removeItem(ClickableItem item) {
+        items.remove(item);
         return this;
     }
 
@@ -118,7 +117,7 @@ public class ExtendInventory implements Listener {
         if(currentPage != 1) inventory.setItem(inventory.getSize() - 7, ItemCache.previousPage);
 
         for(byte slot : toolbarItems.keySet()) {
-            inventory.setItem(slot - 1 + inventory.getSize() - 9, toolbarItems.get(slot).getItem());
+            inventory.setItem(slot, toolbarItems.get(slot).getItem());
         }
     }
 
@@ -154,15 +153,13 @@ public class ExtendInventory implements Listener {
     /**
      * @param slot the slot between 1 and 9 where we want to place the new item
      * @param item the item to place in the toolbar
-     * @param actionOnClick the action to execute when click on the item
      * @param force know if we don't care about everything else
      * @return the current instance
      */
-    public ExtendInventory addToolbarItem(int slot, ClickableItem.Item item, ClickableItem.ActionOnClick actionOnClick, boolean force) {
-        ClickableItem clickableItem = new ClickableItem(item, actionOnClick);
+    public ExtendInventory addToolbarItem(int slot, ClickableItem item, boolean force) {
         if(slot > 9 || slot < 1) return this;
-        if((this.toolbarItems.containsKey((byte)slot) || this.toolbarItems.containsValue(clickableItem)) && !force) return this;
-        this.toolbarItems.put((byte) slot, clickableItem);
+        if((this.toolbarItems.containsKey(slot) || this.toolbarItems.containsValue(item)) && !force) return this;
+        this.toolbarItems.put((byte) slot, item);
 
         for(Inventory inventory : this.inventories){
             if((inventory.getItem(slot).equals(ItemCache.nextPage) || inventory.getItem(slot).equals(ItemCache.previousPage)) && !force) return this;

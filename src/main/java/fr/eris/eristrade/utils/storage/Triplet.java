@@ -1,15 +1,18 @@
-package fr.eris.eristrade.utils;
+package fr.eris.eristrade.utils.storage;
 
 import com.google.gson.annotations.Expose;
 import lombok.Getter;
 import lombok.Setter;
 
-public class Tuple<First, Second> {
+public class Triplet <First, Second, Third> {
+
     @Expose @Getter @Setter private First first;
     @Expose @Getter @Setter private Second second;
+    @Expose @Getter @Setter private Third third;
 
-    public Tuple(First first, Second second) {
+    public Triplet(First first, Second second, Third third) {
         this.first = first;
         this.second = second;
+        this.third = third;
     }
 }

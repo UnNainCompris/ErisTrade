@@ -3,7 +3,6 @@ package fr.eris.eristrade.utils.inventory;
 import fr.eris.eristrade.ErisTrade;
 import fr.eris.eristrade.utils.BukkitTasks;
 import fr.eris.eristrade.utils.ColorUtils;
-import fr.eris.eristrade.utils.InventoryUtils;
 import fr.eris.eristrade.utils.item.ClickableItem;
 import fr.eris.eristrade.utils.item.ItemCache;
 import lombok.Getter;
@@ -21,7 +20,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class CustomInventory implements Listener {
@@ -45,17 +47,8 @@ public class CustomInventory implements Listener {
         Bukkit.getPluginManager().registerEvents(this, ErisTrade.getInstance());
     }
 
-    public void clearItems() {
-        items.clear();
-    }
-
-    public void clearToolbarsItems() {
-        toolbarItems.clear();
-    }
-
-    public CustomInventory setItem(int slot, ClickableItem.Item item, ClickableItem.ActionOnClick actionOnClick) {
-        ClickableItem clickableItem = new ClickableItem(item, actionOnClick);
-        items.put((byte) slot, clickableItem);
+    public CustomInventory setItem(int slot, ClickableItem item) {
+        items.put((byte) slot, item);
         return this;
     }
 
@@ -74,75 +67,54 @@ public class CustomInventory implements Listener {
         return this;
     }
 
-    private boolean loadInventory() {
+    private void loadInventory() {
         byte inventorySize = this.inventorySize;
-        boolean hasInventoryChanged;
-        if(inventory == null || inventory.getSize() != inventorySize || !ColorUtils.translate(inventoryName).equals(inventory.getName())) {
-            inventory = Bukkit.createInventory(null, inventorySize, ColorUtils.translate(inventoryName));
-            hasInventoryChanged = true;
-        }
-        else {
-            inventory.clear();
-            hasInventoryChanged = false;
-        }
-
+        inventory = Bukkit.createInventory(null, inventorySize, ColorUtils.translate(inventoryName));
         if(items != null && !this.items.isEmpty())
             for(byte key : items.keySet()) {
                 inventory.setItem(key, items.get(key).getItem());
             }
         setToolbar(inventory);
-        return hasInventoryChanged;
     }
 
     private void setToolbar(Inventory inventory) {
         InventoryUtils.setSideInventory(inventory, new ItemStack[]{ItemCache.placeHolder}, new InventoryUtils.Side[]{InventoryUtils.Side.DOWN});
 
         for(byte slot : toolbarItems.keySet()) {
-            inventory.setItem(slot - 1 + inventory.getSize() - 9, toolbarItems.get(slot).getItem());
+            inventory.setItem(slot, toolbarItems.get(slot).getItem());
         }
     }
 
     public void destroy() {
-        new ArrayList<>(currentViewers).forEach(uuid -> Bukkit.getPlayer(uuid).closeInventory());
+        currentViewers.forEach(uuid -> Bukkit.getPlayer(uuid).closeInventory());
         HandlerList.unregisterAll(this);
     }
 
-    public void update(Player... newViewers) {
+    public void update(HumanEntity... newViewers) {
         final List<Player> playerWithOpenedInventory = new ArrayList<>();
         for(UUID playerUUID : currentViewers) {
             final Player player = Bukkit.getPlayer(playerUUID);
             playerWithOpenedInventory.add(player);
         }
-        boolean hasInventoryChanged = loadInventory();
+        loadInventory();
         for(Player player : playerWithOpenedInventory) {
-            if(hasInventoryChanged)
-                player.openInventory(inventory);
-            else player.updateInventory();
+            player.openInventory(inventory);
         }
-        if(newViewers != null) {
-            List<Player> newViewersCopy = new ArrayList<>(Arrays.asList(newViewers));
-            for(Player currentViewers : playerWithOpenedInventory) {
-                newViewersCopy.remove(currentViewers);
-            }
-
-            for (Player newViewer : newViewersCopy) {
+        if(newViewers != null)
+            for(HumanEntity newViewer : newViewers)
                 newViewer.openInventory(inventory);
-            }
-        }
     }
 
     /**
      * @param slot the slot between 1 and 9 where we want to place the new item
      * @param item the item to place in the toolbar
-     * @param actionOnClick the action to execute when click on the item
      * @param force know if we don't care about everything else
      * @return the current instance
      */
-    public CustomInventory addToolbarItem(int slot, ClickableItem.Item item, ClickableItem.ActionOnClick actionOnClick, boolean force) {
-        ClickableItem clickableItem = new ClickableItem(item, actionOnClick);
+    public CustomInventory addToolbarItem(int slot, ClickableItem item, boolean force) {
         if(slot > 9 || slot < 1) return this;
-        if((this.toolbarItems.containsKey((byte)slot) || this.toolbarItems.containsValue(clickableItem)) && !force) return this;
-        this.toolbarItems.put((byte) slot, clickableItem);
+        if((this.toolbarItems.containsKey((byte)slot) || this.toolbarItems.containsValue(item)) && !force) return this;
+        this.toolbarItems.put((byte) slot, item);
         this.update();
         return this;
     }
@@ -153,7 +125,7 @@ public class CustomInventory implements Listener {
      * @return false if the inventory are not in the inventory list other is the index of the find inventory
      */
     public boolean isValidInventory(Inventory inventory) {
-        if(inventory == null || this.inventory == null) return false;
+        if(inventory == null) return false;
         return this.inventory.equals(inventory);
     }
 
@@ -162,6 +134,7 @@ public class CustomInventory implements Listener {
         if(!isValidInventory(event.getInventory())) return;
         if(event.getCurrentItem() == null) return;
         event.setCancelled(true);
+
         final ItemStack clickedItem = event.getCurrentItem();
 
         if(isToolbarSlot((byte) event.getSlot(), event.getInventory())) {
