@@ -11,9 +11,7 @@ import fr.eris.eristrade.utils.item.ItemBuilder;
 import fr.eris.eristrade.utils.item.ItemCache;
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -30,10 +28,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class Trade implements Listener {
 
@@ -87,10 +82,30 @@ public class Trade implements Listener {
         if(tickSinceTradeAccept % 20 == 0) {
             updateSeparator(firstPlayer);
             firstPlayer.getTradeInventory().update(firstPlayer.getPlayer());
+            firstPlayer.getPlayer().playNote(firstPlayer.getPlayer().getLocation(),
+                    Instrument.PIANO, Note.sharp(12 * (tickSinceTradeAccept / 20), Note.Tone.A));
             updateSeparator(secondPlayer);
             secondPlayer.getTradeInventory().update(secondPlayer.getPlayer());
+            secondPlayer.getPlayer().playNote(secondPlayer.getPlayer().getLocation(),
+                    Instrument.PIANO, Note.sharp(12 * (tickSinceTradeAccept / 20), Note.Tone.A));
         }
-        if(tickSinceTradeAccept == 100) {
+        if(tickSinceTradeAccept == 120) {
+            if(!isPlayerHasEnoughSpace(firstPlayer.getCurrentTradedItem(), secondPlayer.getPlayer())) {
+                firstPlayer.getPlayer().sendMessage(ColorUtils.translate("&c[x] &7" + secondPlayer.getPlayer().getName()
+                        + " don't have enough inventory space !"));
+                secondPlayer.getPlayer().sendMessage(ColorUtils.translate("&c[x] &7You don't have enough inventory space !"));
+                cancelTrade();
+                return;
+            }
+
+            if(!isPlayerHasEnoughSpace(secondPlayer.getCurrentTradedItem(), firstPlayer.getPlayer())) {
+                firstPlayer.getPlayer().sendMessage(ColorUtils.translate("&c[x] &7You don't have enough inventory space !"));
+                secondPlayer.getPlayer().sendMessage(ColorUtils.translate("&c[x] &7" + firstPlayer.getPlayer().getName()
+                        + " don't have enough inventory space !"));
+                cancelTrade();
+                return;
+            }
+
             finishTrade();
         }
     }
@@ -116,11 +131,20 @@ public class Trade implements Listener {
         List<Integer> separatorSlotList = Arrays.asList(4, 13, 22, 31, 40);
         for(int slot : separatorSlotList) { // separator between the 2 trade
             final short itemColor;
-            if(separatorSlotList.size() - 1 - separatorSlotList.indexOf(slot) < (100 - tickSinceTradeAccept) / 20) itemColor = ItemCache.ItemColor.GRAY; // TODO: 23/10/2023
-            else itemColor = ItemCache.ItemColor.LIME;
+            boolean glowing = false;
 
-            traderPlayerData.getTradeInventory().setItem(slot,
-                    () -> ItemBuilder.placeHolders(Material.STAINED_GLASS_PANE, itemColor, false).build(), null);
+            int itemIndex = separatorSlotList.indexOf(slot);
+            int itemState = (int)Math.ceil(((itemIndex + 1f) * 20f - tickSinceTradeAccept) / 20f);
+
+            if(itemState <= 0) {
+                itemColor = ItemCache.ItemColor.LIME;
+                glowing = itemState < 0;
+            }
+            else itemColor = ItemCache.ItemColor.GRAY;
+
+            ItemBuilder separator = ItemBuilder.placeHolders(Material.STAINED_GLASS_PANE, itemColor, glowing);
+
+            traderPlayerData.getTradeInventory().setItem(slot, separator::build, null);
         }
     }
 
@@ -130,9 +154,12 @@ public class Trade implements Listener {
             int itemSlot = (int) (rawItemSlot % 4 + (Math.floor(rawItemSlot / 4f) * 9));
             traderPlayerData.getTradeInventory().setItem(itemSlot, tradeItem::buildForDisplay,
                     (event) -> {
-                        traderPlayerData.removeItem(getAmountOfItemWithClickType(tradeItem, event.getClick()),
-                                new NBTItem(event.getCurrentItem()).getUUID("eristrade.itemkey"), this);
-                        updateInventory();
+                        if(traderPlayerData.removeItem(getAmountOfItemWithClickType(tradeItem, event.getClick()),
+                            new NBTItem(event.getCurrentItem()).getUUID("eristrade.itemkey"), this) == TradeData.RemoveItemError.NO_ERROR) {
+                            secondPlayer.getPlayer().playSound(secondPlayer.getPlayer().getLocation(), Sound.ITEM_PICKUP, 1000, 1000);
+                            firstPlayer.getPlayer().playSound(firstPlayer.getPlayer().getLocation(), Sound.ITEM_PICKUP, 1000, 1000);
+                            updateInventory();
+                        }
                     });
         }
 
@@ -156,8 +183,10 @@ public class Trade implements Listener {
             else return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.RED, false)
                     .setDisplayName("&aClick here to accept the trade !").build();
         }, (event) -> {
-            traderPlayerData.setAcceptTrade(!traderPlayerData.isAcceptTrade());
-            updateInventory();
+            if(event.getCurrentItem().getDurability() != ItemCache.ItemColor.GRAY) {
+                traderPlayerData.setAcceptTrade(!traderPlayerData.isAcceptTrade());
+                updateInventory();
+            }
         }, true);
 
         traderPlayerData.getTradeInventory().addToolbarItem(9, () -> {
@@ -245,6 +274,40 @@ public class Trade implements Listener {
         return null;
     }
 
+    public boolean isPlayerHasEnoughSpace(List<TradeItem> itemToCheck, Player target) {
+        HashMap<TradeItem, Integer> itemAmountMap = new HashMap<>();
+        for(TradeItem currentTradeItem : itemToCheck) {
+            itemAmountMap.put(currentTradeItem, currentTradeItem.getAmount());
+        }
+
+        for(ItemStack currentInventoryItem : target.getInventory().getContents()) {
+            for (TradeItem currentKey : itemAmountMap.keySet()) {
+                if(itemAmountMap.get(currentKey) <= 0) continue;
+                if(currentInventoryItem == null || currentInventoryItem.getType() == Material.AIR) {
+                    itemAmountMap.put(currentKey, itemAmountMap.get(currentKey) - currentKey.getItem().getMaxStackSize());
+                    break; // go to the next player inventory slot
+                } if(currentInventoryItem.isSimilar(currentKey.getItem())) {
+                    itemAmountMap.put(currentKey, itemAmountMap.get(currentKey) -
+                            (currentInventoryItem.getMaxStackSize() - currentInventoryItem.getAmount()));
+                    break; // go to the next player inventory slot
+                }
+            }
+            if(!checkIfAnyPositive(itemAmountMap)) break;
+        }
+        return !checkIfAnyPositive(itemAmountMap);
+    }
+
+    private boolean checkIfAnyPositive(HashMap<TradeItem, Integer> itemAmountMap) {
+        boolean anyPositive = false;
+        for (TradeItem currentKey : itemAmountMap.keySet()) {
+            if(itemAmountMap.get(currentKey) > 0) {
+                anyPositive = true;
+                break;
+            }
+        }
+        return anyPositive;
+    }
+
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if(event.getClickedInventory() == null) return;
@@ -253,6 +316,7 @@ public class Trade implements Listener {
         Player player = (Player) event.getWhoClicked();
         TradeData playerData = getDataFromPlayer(player);
         if(playerData == null) return;
+        TradeData targetData = playerData.equals(firstPlayer) ? secondPlayer : firstPlayer;
         event.setCancelled(true);
         ItemStack item = event.getCurrentItem();
         if(item == null) return;
@@ -262,10 +326,17 @@ public class Trade implements Listener {
         if(amount <= 0) return;
         tradeItemFromPlayer.setAmount(amount);
         if(playerData.getCurrentTradedItem().size() >= 20) return;
+
+        List<TradeItem> currentTradedItemWithNew = new ArrayList<>(playerData.getCurrentTradedItem());
+        currentTradedItemWithNew.add(tradeItemFromPlayer);
+        if(!isPlayerHasEnoughSpace(currentTradedItemWithNew, targetData.getPlayer())) return; // Target don't have enough space
+
         if(removeItemFromTradeItemInPlayerInventory(tradeItemFromPlayer, player)) {
             if(playerData.addNewItem(item, tradeItemFromPlayer.getAmount(), this) != TradeData.AddItemError.NO_ERROR)
                 return;
+            firstPlayer.getPlayer().playSound(firstPlayer.getPlayer().getLocation(), Sound.ITEM_PICKUP, 1000, 1000);
             firstPlayer.setAcceptTrade(false);
+            secondPlayer.getPlayer().playSound(secondPlayer.getPlayer().getLocation(), Sound.ITEM_PICKUP, 1000, 1000);
             secondPlayer.setAcceptTrade(false);
             updateInventory();
         }
@@ -279,6 +350,16 @@ public class Trade implements Listener {
 
     @EventHandler
     public void onPlayerInteractEvent(PlayerInteractEvent event) {
+        tradeCanceler(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onPlayerInteractAtEntityEvent(PlayerInteractAtEntityEvent event) {
+        tradeCanceler(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onPlayerInteractEntityEvent(PlayerInteractEntityEvent event) {
         tradeCanceler(event.getPlayer());
     }
 
@@ -336,6 +417,12 @@ public class Trade implements Listener {
         destroy();
         addTradeItemAndDropOverflow(secondPlayer.getCurrentTradedItem(), firstPlayer.getPlayer());
         addTradeItemAndDropOverflow(firstPlayer.getCurrentTradedItem(), secondPlayer.getPlayer());
+        firstPlayer.getPlayer().sendMessage(ColorUtils.translate("&a[O] &7You successfully finished the trade with "
+                + secondPlayer.getPlayer().getName() + " ! &7(Check /trade log for more information)"));
+        firstPlayer.getPlayer().playSound(firstPlayer.getPlayer().getLocation(), Sound.LEVEL_UP, 10000, 10000);
+        secondPlayer.getPlayer().sendMessage(ColorUtils.translate("&a[O] &7You successfully finished the trade with "
+                + firstPlayer.getPlayer().getName() + " ! &7(Check /trade log for more information)"));
+        secondPlayer.getPlayer().playSound(secondPlayer.getPlayer().getLocation(), Sound.LEVEL_UP, 10000, 10000);
     }
 
     public void cancelTrade() {
@@ -344,6 +431,11 @@ public class Trade implements Listener {
         destroy();
         addTradeItemAndDropOverflow(firstPlayer.getCurrentTradedItem(), firstPlayer.getPlayer());
         addTradeItemAndDropOverflow(secondPlayer.getCurrentTradedItem(), secondPlayer.getPlayer());
+        firstPlayer.getPlayer().playSound(firstPlayer.getPlayer().getLocation(), Sound.FIZZ, 100, 100);
+        secondPlayer.getPlayer().playSound(secondPlayer.getPlayer().getLocation(), Sound.FIZZ, 100, 100);
+        firstPlayer.getPlayer().sendMessage(ColorUtils.translate("&c[x] &7The trade with " + secondPlayer.getPlayer().getName() + " was canceled !"));
+        secondPlayer.getPlayer().sendMessage(ColorUtils.translate("&c[x] &7The trade with " + firstPlayer.getPlayer().getName() + " was canceled !"));
+
     }
 
     public void destroy() {

@@ -93,7 +93,7 @@ public class TradeData {
         return null;
     }
 
-    private enum RemoveItemError {
+    enum RemoveItemError {
         ITEM_NOT_FOUND,
         INVALID_AMOUNT,
         NOT_ENOUGH_PLAYER_SPACE,
