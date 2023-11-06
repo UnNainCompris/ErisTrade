@@ -63,7 +63,6 @@ public class TradeExecutor extends ErisSubCommandExecutor {
             player.sendMessage(ColorUtils.translate("&c[x] &7" + target.getDisplayName() + " &7is already invited to trade !"));
             return;
         }
-        System.out.println(player.getName() + " -- " + target.getName());
         ErisTrade.getTradeManager().sendTradeRequest(player, target);
     }
 }

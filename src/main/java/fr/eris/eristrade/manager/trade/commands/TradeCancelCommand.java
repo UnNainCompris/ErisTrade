@@ -8,6 +8,7 @@ import fr.eris.eristrade.manager.commands.args.PlayerCommandArgument;
 import fr.eris.eristrade.manager.commands.args.StringCommandArgument;
 import fr.eris.eristrade.utils.ColorUtils;
 import fr.eris.eristrade.utils.PlayerUtils;
+import fr.eris.eristrade.utils.storage.Tuple;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -15,6 +16,7 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 public class TradeCancelCommand extends ErisSubCommand {
@@ -27,9 +29,8 @@ public class TradeCancelCommand extends ErisSubCommand {
     public void execute(CommandSender sender, List<CommandArgument<?>> args) {
         Player player = (Player) sender;
         Player target = args.get(0).convert(Player.class).getValue();
-        System.out.println(player.getName() + " -- " + target.getName());
-         if(!ErisTrade.getTradeManager().hasSendTradeRequest(player, target)) {
-            player.sendMessage(ColorUtils.translate("&c[x] &7" + target.getDisplayName() + " &7is already not invited to trade !"));
+        if(!ErisTrade.getTradeManager().hasSendTradeRequest(player, target) && !ErisTrade.getTradeManager().hasSendTradeRequest(target, player)) {
+            sender.sendMessage(ColorUtils.translate("&c[x] &7" + target.getName() + " &7doesn't send you (or you sent to him) a trade request !!"));
             return;
         }
         ErisTrade.getTradeManager().removeTradeRequest(player, target);
@@ -47,16 +48,22 @@ public class TradeCancelCommand extends ErisSubCommand {
 
     @Override
     public @NonNull List<CommandArgument<?>> registerCommandArgument() {
-        return Collections.singletonList(new PlayerCommandArgument((args) -> getPlayerThatAskTradeTo((CommandSender) args[0]), true, false));
+        return Collections.singletonList(new PlayerCommandArgument((args) -> getAllPossibleCancelableTrade((CommandSender) args[0]), true, false));
     }
 
-    public List<String> getPlayerThatAskTradeTo(CommandSender sender) {
-        List<String> askerList = new ArrayList<>();
-        if(!(sender instanceof Player)) return askerList;
+    public List<String> getAllPossibleCancelableTrade(CommandSender sender) {
+        List<String> possibilityList = new ArrayList<>();
+        if(!(sender instanceof Player)) return possibilityList;
         Player player = (Player) sender;
-        for(Player key : ErisTrade.getTradeManager().getTradeRequestCache().keySet()) {
-            if(player.equals(ErisTrade.getTradeManager().getTradeRequestCache().get(key).getSecond())) askerList.add(key.getName());
+        HashMap<Player, Tuple<Long, Player>> tradeRequestCache = ErisTrade.getTradeManager().getTradeRequestCache();
+        if(tradeRequestCache.containsKey(player))
+            possibilityList.add(tradeRequestCache.get(player).getSecond().getName());
+
+        for(Player key : tradeRequestCache.keySet()) {
+            if(tradeRequestCache.get(key).getSecond().equals(player))
+                possibilityList.add(key.getName());
         }
-        return askerList;
+
+        return possibilityList;
     }
 }

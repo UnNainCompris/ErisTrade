@@ -1,19 +1,23 @@
 package fr.eris.eristrade.utils.inventory.eris;
 
 import de.tr7zw.changeme.nbtapi.NBTItem;
+import fr.eris.eristrade.ErisTrade;
 import fr.eris.eristrade.utils.ColorUtils;
 import fr.eris.eristrade.utils.error.data.ErrorCode;
 import fr.eris.eristrade.utils.error.data.ErrorType;
 import fr.eris.eristrade.utils.error.exception.ErisPluginException;
 import fr.eris.eristrade.utils.item.NBTUtils;
 import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -31,7 +35,7 @@ public abstract class ErisInventory implements Listener {
     private final HashMap<Integer, ErisInventoryItem> inventoryContent = new HashMap<>();
 
     public Inventory inventory;
-    private final InventoryStateData inventoryStateData;
+    @Getter private final InventoryStateData inventoryStateData;
 
     public ErisInventory(int inventoryRowAmount, String inventoryName, Player owner) {
         this.inventoryRowAmount = inventoryRowAmount;
@@ -39,6 +43,7 @@ public abstract class ErisInventory implements Listener {
         this.owner = owner;
         this.inventoryStateData = new InventoryStateData();
         inventory = Bukkit.createInventory(null, inventoryRowAmount * 9, ColorUtils.translate(inventoryName));
+        Bukkit.getPluginManager().registerEvents(this, ErisTrade.getInstance());
     }
 
     public final void changeInventoryName(String newInventoryName) {
@@ -65,7 +70,7 @@ public abstract class ErisInventory implements Listener {
      */
     public void forceInventoryUpdate() {
         owner.closeInventory();
-        inventory = null;
+        //inventory = null;
         openInventory();
     }
 
@@ -81,19 +86,26 @@ public abstract class ErisInventory implements Listener {
             return;
         }
         updateInventory();
-
         if(owner.getOpenInventory() == null) {
-            owner.openInventory(inventory);
-            onOpen();
+            forceOnlyOpen();
         }
-        else owner.updateInventory();
+        else {
+            owner.updateInventory();
+        }
+    }
+
+    public void forceOnlyOpen() {
+        owner.openInventory(inventory);
+        onOpen();
     }
 
     private void updateInventory() {
         if(inventory == null || (inventory.getSize() != inventoryRowAmount * 9 ||
-                !inventoryName.equals(ColorUtils.strip(inventory.getTitle())))) {
+                !ColorUtils.strip(ColorUtils.translate(inventoryName)).equals(ColorUtils.strip(inventory.getTitle())))) {
             inventory = Bukkit.createInventory(null, inventoryRowAmount * 9, ColorUtils.translate(inventoryName));
-            owner.closeInventory();
+            if(owner.getOpenInventory() != null) {
+                owner.closeInventory();
+            }
         }
         inventory.clear();
         for(Integer itemSlot : inventoryContent.keySet()) {
@@ -128,11 +140,13 @@ public abstract class ErisInventory implements Listener {
 
     @EventHandler
     public final void onInventoryClickEvent(InventoryClickEvent event) {
-        if(!event.getWhoClicked().getOpenInventory().getTopInventory().equals(inventory)) return;
+        if(this.inventory == null) return;
+        if(!this.inventory.equals(event.getInventory())) return;
         onClick(event);
         ItemStack clickedItem = event.getCurrentItem();
-        if(clickedItem == null) return;
+        if(clickedItem == null || clickedItem.getType() == Material.AIR) return;
         ErisInventoryItem erisItem = findErisItemByItemStack(clickedItem);
+        if(erisItem == null) return;
         if(erisItem.isCancelingClickEvent()) event.setCancelled(true);
         erisItem.callAction(event);
     }
@@ -175,8 +189,8 @@ public abstract class ErisInventory implements Listener {
     public abstract boolean onPreOpen();
     public abstract void onOpen();
 
-    private class InventoryStateData {
-        private boolean allowedToClose;
+    public class InventoryStateData {
+        @Setter @Getter private boolean allowedToClose;
     }
 
 }

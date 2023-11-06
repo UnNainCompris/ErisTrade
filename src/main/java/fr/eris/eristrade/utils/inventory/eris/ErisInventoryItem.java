@@ -52,6 +52,7 @@ public class ErisInventoryItem {
     }
 
     public void callAction(InventoryClickEvent event) {
+        if(this.itemAction == null) return;
         this.itemAction.onItemClick(event);
     }
 }

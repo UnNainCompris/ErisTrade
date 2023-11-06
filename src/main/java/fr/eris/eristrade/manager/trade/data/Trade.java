@@ -45,6 +45,8 @@ public class Trade implements Listener {
         tradeTask = BukkitTasks.syncTimer(this::tradeTask, 1, 1);
         Bukkit.getServer().getPluginManager().registerEvents(this, ErisTrade.getInstance());
         updateInventory();
+        this.firstPlayer.getTradeInventory().forceOnlyOpen();
+        this.secondPlayer.getTradeInventory().forceOnlyOpen();
     }
 
     public void tradeTask() {
@@ -75,10 +77,8 @@ public class Trade implements Listener {
         }
         tickSinceTradeAccept++;
         if(tickSinceTradeAccept % 20 == 0) {
-            firstPlayer.getPlayer().playNote(firstPlayer.getPlayer().getLocation(),
-                    Instrument.PIANO, Note.sharp(12 * (tickSinceTradeAccept / 20), Note.Tone.A));
-            secondPlayer.getPlayer().playNote(secondPlayer.getPlayer().getLocation(),
-                    Instrument.PIANO, Note.sharp(12 * (tickSinceTradeAccept / 20), Note.Tone.A));
+            firstPlayer.getPlayer().playSound(firstPlayer.getPlayer().getLocation(), Sound.NOTE_PLING, 1000, 1000);
+            firstPlayer.getPlayer().playSound(firstPlayer.getPlayer().getLocation(), Sound.NOTE_PLING, 1000, 1000);
             updateInventory();
         }
         if(tickSinceTradeAccept == 120) {

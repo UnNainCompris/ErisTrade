@@ -117,7 +117,9 @@ public abstract class ErisSubCommandExecutor extends ErisCommand {
         if(!validateExecutionWithArgs(commandSender, args, subCommand) || !validateSenderType(commandSender, args) || !validateSenderPermission(commandSender, args)) {
             return true;
         }
-        execute(commandSender, commandArguments);
+        List<CommandArgument<?>> subCommandArgs = new ArrayList<>(commandArguments);
+        subCommandArgs.addAll(subCommand.getCommandArguments());
+        execute(commandSender, subCommandArgs);
         return true;
     }
 
@@ -152,17 +154,18 @@ public abstract class ErisSubCommandExecutor extends ErisCommand {
     public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
         if(args == null) return Collections.emptyList();
         if(args.length == 1) super.tabComplete(sender, alias, args);
-        System.out.println(Arrays.toString(args));
         ErisSubCommand subCommand = getSubCommand(args[0]);
         int argsAsIndex = args.length - 1;
-        if(subCommand == null)
-            if(commandArguments.size() <= argsAsIndex || commandArguments.get(argsAsIndex) == null) return Collections.emptyList();
+        if(subCommand == null) {
+            if (commandArguments.size() <= argsAsIndex || commandArguments.get(argsAsIndex) == null)
+                return Collections.emptyList();
             else return commandArguments.get(argsAsIndex).matchingArgs(args[argsAsIndex], sender);
+        }
         if(subCommand.getCommandArguments().size() + 1 <= argsAsIndex) {
             return Collections.emptyList();
         }
         else {
-            return subCommand.getCommandArguments().get(argsAsIndex - 1).matchingArgs(args[argsAsIndex], sender);
+            return subCommand.getCommandArguments().get(Math.max(argsAsIndex - 1, 0)).matchingArgs(args[argsAsIndex], sender);
         }
     }
 }

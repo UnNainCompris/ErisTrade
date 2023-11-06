@@ -32,11 +32,11 @@ public class TradeInventory extends ErisInventory {
         super(6, inventoryName, owner);
         this.ownerTradeData = ownerTradeData;
         this.targetTrade = targetTrade;
+        this.getInventoryStateData().setAllowedToClose(true);
     }
 
     @Override
     public void update(HashMap<Integer, ErisInventoryItem> inventoryMap) {
-        InventoryUtils.setSideInventory(this.inventory, new ItemStack[]{ItemCache.placeHolder}, new InventoryUtils.Side[]{InventoryUtils.Side.DOWN});
         try {
             updateOwnerTradedItem(inventoryMap);
             updateSeparator(inventoryMap);
@@ -49,6 +49,11 @@ public class TradeInventory extends ErisInventory {
     }
 
     private void updateToolBar(HashMap<Integer, ErisInventoryItem> inventoryMap) throws ErisPluginException {
+        int inventorySize = getInventoryRowAmount() * 9;
+        for(int slot : new int[]{inventorySize - 9, inventorySize - 8, inventorySize - 7, inventorySize - 6, inventorySize - 5,
+                inventorySize - 4, inventorySize - 3, inventorySize - 2, inventorySize - 1}) {
+            inventoryMap.put(slot, ErisInventoryItem.create(() -> ItemCache.placeHolder));
+        }
         if(ImplementationManager.getEconomy() != null) {
             updateOwnerTradedMoney(inventoryMap);
             updateTradedPlayerTradedMoney(inventoryMap);
@@ -94,14 +99,9 @@ public class TradeInventory extends ErisInventory {
                 return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.GRAY, false)
                         .setDisplayName("&7You cannot trade nothing on both side !").build();
             }
-            return ItemBuilder.placeHolders(Material.WOOL, (ownerTradeData.isAcceptTrade()) ? ItemCache.ItemColor.LIME : ItemCache.ItemColor.RED, false)
-                    .setDisplayName((ownerTradeData.isAcceptTrade()) ? "&a" + getTradedPlayer().getName() + " has accepted the trade !" :
+            return ItemBuilder.placeHolders(Material.WOOL, (targetTrade.getDataFromPlayer(getTradedPlayer()).isAcceptTrade()) ? ItemCache.ItemColor.LIME : ItemCache.ItemColor.RED, false)
+                    .setDisplayName((targetTrade.getDataFromPlayer(getTradedPlayer()).isAcceptTrade()) ? "&a" + getTradedPlayer().getName() + " has accepted the trade !" :
                                         "&c" + getTradedPlayer().getName() + " doesn't have accepted the trade !").build();
-        }, (event) -> {
-            if(event.getCurrentItem().getDurability() != ItemCache.ItemColor.GRAY) {
-                ownerTradeData.setAcceptTrade(!ownerTradeData.isAcceptTrade());
-                openInventory();
-            }
         }));
     }
 
@@ -165,7 +165,7 @@ public class TradeInventory extends ErisInventory {
 
     @Override
     public boolean onClose() {
-        return false;
+        return true;
     }
 
     @Override

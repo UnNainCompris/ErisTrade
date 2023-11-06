@@ -28,7 +28,6 @@ public class PlayerCommandArgument extends CommandArgument<Player> {
 
     @Override
     public Player convertArgument(String input) {
-        System.out.println(input + " -- " + Bukkit.getPlayer(input));
         return PlayerUtils.toPlayer(input);
     }
 }

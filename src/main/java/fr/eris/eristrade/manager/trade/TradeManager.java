@@ -99,11 +99,28 @@ public class TradeManager extends Manager {
         return target.equals(tradeRequestCache.getOrDefault(player, new Tuple<>(null, null)).getSecond());
     }
 
-    public void removeTradeRequest(Player from, Player to) {
-        if(hasSendTradeRequest(from, to)) {
-            to.sendMessage(ColorUtils.translate("&7The trade request was canceled !"));
-            from.sendMessage(ColorUtils.translate("&7The trade request was canceled !"));
+    public void removeTradeRequest(Player firstPlayer, Player secondPlayer) {
+        Tuple<Player, Player> sortedPlayer = sortSenderRequested(firstPlayer, secondPlayer);
+        Player requester = sortedPlayer.getFirst();
+        Player requested = sortedPlayer.getSecond();
+
+        if(requested != null && requester != null) {
+            requester.sendMessage(ColorUtils.translate("&7The trade request you sent to &6" + requested.getName() + " &7was canceled !"));
+            requested.sendMessage(ColorUtils.translate("&7The trade request from &6" + requester.getName() + " &7was canceled !"));
+            tradeRequestCache.remove(requester);
         }
+    }
+
+    public Tuple<Player, Player> sortSenderRequested(Player firstPlayer, Player secondPlayer) {
+        Tuple<Player, Player> sortedPlayer = new Tuple<>(null, null);
+        if(hasSendTradeRequest(firstPlayer, secondPlayer)) {
+            sortedPlayer.setFirst(firstPlayer);
+            sortedPlayer.setSecond(secondPlayer);
+        } else if(hasSendTradeRequest(secondPlayer, firstPlayer)) {
+            sortedPlayer.setFirst(secondPlayer);
+            sortedPlayer.setSecond(firstPlayer);
+        }
+        return sortedPlayer;
     }
 
     public void removeTrade(Trade trade) {
