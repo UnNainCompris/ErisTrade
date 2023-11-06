@@ -1,7 +1,7 @@
 package fr.eris.eristrade.manager.impl;
 
 import fr.eris.eristrade.ErisTrade;
-import fr.eris.eristrade.utils.manager.Manager;
+import fr.eris.erisutils.utils.manager.Manager;
 import lombok.Getter;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.plugin.RegisteredServiceProvider;

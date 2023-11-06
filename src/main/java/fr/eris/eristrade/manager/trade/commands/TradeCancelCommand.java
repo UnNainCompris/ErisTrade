@@ -1,14 +1,12 @@
 package fr.eris.eristrade.manager.trade.commands;
 
 import fr.eris.eristrade.ErisTrade;
-import fr.eris.eristrade.manager.commands.ErisCommand;
-import fr.eris.eristrade.manager.commands.ErisSubCommand;
-import fr.eris.eristrade.manager.commands.args.CommandArgument;
-import fr.eris.eristrade.manager.commands.args.PlayerCommandArgument;
-import fr.eris.eristrade.manager.commands.args.StringCommandArgument;
-import fr.eris.eristrade.utils.ColorUtils;
-import fr.eris.eristrade.utils.PlayerUtils;
-import fr.eris.eristrade.utils.storage.Tuple;
+import fr.eris.erisutils.manager.commands.ErisCommand;
+import fr.eris.erisutils.manager.commands.ErisSubCommand;
+import fr.eris.erisutils.manager.commands.args.CommandArgument;
+import fr.eris.erisutils.manager.commands.args.PlayerCommandArgument;
+import fr.eris.erisutils.utils.bukkit.ColorUtils;
+import fr.eris.erisutils.utils.storage.Tuple;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -41,6 +39,11 @@ public class TradeCancelCommand extends ErisSubCommand {
         if(errorCode == ErisCommand.CommandExecutionError.INVALID_ARGS) {
             if (targetedCommandArguments instanceof PlayerCommandArgument) {
                 sender.sendMessage(ColorUtils.translate("&c[x] &7" + targetedArgs + " &7doesn't send you (or you sent to him) a trade request !"));
+                return;
+            }
+        } if(errorCode == ErisCommand.CommandExecutionError.NOT_ENOUGH_ARGS) {
+            if (targetedCommandArguments instanceof PlayerCommandArgument) {
+                sender.sendMessage(ColorUtils.translate("&c[x] &7Missing argument !"));
                 return;
             }
         }

@@ -2,11 +2,11 @@ package fr.eris.eristrade.manager.trade;
 
 import fr.eris.eristrade.manager.trade.commands.TradeExecutor;
 import fr.eris.eristrade.manager.trade.data.Trade;
-import fr.eris.eristrade.utils.BukkitTasks;
-import fr.eris.eristrade.utils.ColorUtils;
-import fr.eris.eristrade.utils.MessageBuilder;
-import fr.eris.eristrade.utils.manager.Manager;
-import fr.eris.eristrade.utils.storage.Tuple;
+import fr.eris.erisutils.utils.MessageBuilder;
+import fr.eris.erisutils.utils.bukkit.BukkitTasks;
+import fr.eris.erisutils.utils.bukkit.ColorUtils;
+import fr.eris.erisutils.utils.manager.Manager;
+import fr.eris.erisutils.utils.storage.Tuple;
 import lombok.Getter;
 import net.md_5.bungee.api.chat.ClickEvent;
 import org.bukkit.Bukkit;

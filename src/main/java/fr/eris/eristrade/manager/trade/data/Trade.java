@@ -1,14 +1,9 @@
 package fr.eris.eristrade.manager.trade.data;
 
-import de.tr7zw.changeme.nbtapi.NBTItem;
 import fr.eris.eristrade.ErisTrade;
-import fr.eris.eristrade.manager.impl.ImplementationManager;
-import fr.eris.eristrade.utils.BukkitTasks;
-import fr.eris.eristrade.utils.ColorUtils;
-import fr.eris.eristrade.utils.item.ItemBuilder;
-import fr.eris.eristrade.utils.item.ItemCache;
+import fr.eris.erisutils.utils.bukkit.BukkitTasks;
+import fr.eris.erisutils.utils.bukkit.ColorUtils;
 import lombok.Getter;
-import lombok.Setter;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;

@@ -1,13 +1,12 @@
 package fr.eris.eristrade.manager.trade.commands;
 
 import fr.eris.eristrade.ErisTrade;
-import fr.eris.eristrade.manager.commands.ErisSubCommand;
-import fr.eris.eristrade.manager.commands.ErisSubCommandExecutor;
-import fr.eris.eristrade.manager.commands.args.CommandArgument;
-import fr.eris.eristrade.manager.commands.args.PlayerCommandArgument;
-import fr.eris.eristrade.manager.commands.args.StringCommandArgument;
-import fr.eris.eristrade.utils.ColorUtils;
-import fr.eris.eristrade.utils.PlayerUtils;
+import fr.eris.erisutils.manager.commands.ErisSubCommand;
+import fr.eris.erisutils.manager.commands.ErisSubCommandExecutor;
+import fr.eris.erisutils.manager.commands.args.CommandArgument;
+import fr.eris.erisutils.manager.commands.args.StringCommandArgument;
+import fr.eris.erisutils.utils.bukkit.ColorUtils;
+import fr.eris.erisutils.utils.bukkit.PlayerUtils;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;

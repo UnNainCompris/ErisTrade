@@ -1,19 +1,21 @@
 package fr.eris.eristrade;
 
-import fr.eris.eristrade.manager.commands.CommandManager;
 import fr.eris.eristrade.manager.impl.ImplementationManager;
 import fr.eris.eristrade.manager.trade.TradeManager;
-import fr.eris.eristrade.utils.FileUtils;
-import fr.eris.eristrade.utils.manager.ManagerEnabler;
-import fr.eris.eristrade.utils.manager.ManagerPriority;
-import fr.eris.eristrade.utils.manager.Priority;
+import fr.eris.erisutils.ErisConfiguration;
+import fr.eris.erisutils.ErisUtils;
+import fr.eris.erisutils.manager.commands.CommandManager;
+import fr.eris.erisutils.utils.error.exception.ErisPluginException;
+import fr.eris.erisutils.utils.manager.ManagerEnabler;
+import fr.eris.erisutils.utils.manager.ManagerPriority;
+import fr.eris.erisutils.utils.manager.Priority;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.logging.Level;
 
-@ErisConfiguration(version = "Beta - 0.5", permissionPrefix = "eristrade", name = "ErisTrade")
+@ErisConfiguration(name = "ErisTrade", permissionPrefix = "eristrade", version = "0.5-BETA")
 public class ErisTrade extends JavaPlugin {
 
     @Getter private static ErisTrade instance;
@@ -22,7 +24,7 @@ public class ErisTrade extends JavaPlugin {
 
     /* <Manager> */
 
-    @ManagerPriority(initPriority = Priority.HIGHEST) @Getter private static CommandManager commandManager;
+    /* Is loaded in priority with ErisUtils.setup() */ @Getter private static CommandManager commandManager;
     @ManagerPriority(initPriority = Priority.HIGH)  @Getter private static ImplementationManager implementationManager;
     @ManagerPriority(initPriority = Priority.NORMAL)  @Getter private static TradeManager tradeManager;
 
@@ -42,6 +44,13 @@ public class ErisTrade extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
+        try {
+            ErisUtils.setup(this);
+        } catch (ErisPluginException erisPluginException) {
+            erisPluginException.printStackTrace();
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
         ManagerEnabler.init(this);
     }
 
@@ -52,7 +61,6 @@ public class ErisTrade extends JavaPlugin {
             return false;
 
         configuration = configurationAnnotation;
-        FileUtils.ROOT_FOLDER = this.getDataFolder();
         return true;
     }
 

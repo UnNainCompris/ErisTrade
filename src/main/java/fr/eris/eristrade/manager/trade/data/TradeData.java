@@ -1,8 +1,7 @@
 package fr.eris.eristrade.manager.trade.data;
 
 import fr.eris.eristrade.manager.trade.inventory.TradeInventory;
-import fr.eris.eristrade.utils.inventory.CustomInventory;
-import fr.eris.eristrade.utils.item.ItemBuilder;
+import fr.eris.erisutils.utils.item.ItemBuilder;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Material;
