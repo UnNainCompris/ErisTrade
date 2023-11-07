@@ -50,23 +50,24 @@ public class Trade implements Listener {
             tradeTask.cancel();
             return;
         }
+        boolean shouldUpdate = false;
         for(TradeItem currentItem : new ArrayList<>(recentlyUpdatedItem)) {
             if(tradeTickCounter - currentItem.getLastEditTick() > 30) {
                 recentlyUpdatedItem.remove(currentItem);
                 currentItem.setDisplayHasEdited(false);
-                updateInventory();
+                shouldUpdate = true;
                 continue;
             }
             if((tradeTickCounter - currentItem.getLastEditTick()) % 5 == 0) {
                 currentItem.setDisplayHasEdited(!currentItem.isDisplayHasEdited());
-                updateInventory();
+                shouldUpdate = true;
             }
         }
 
+        if(shouldUpdate) updateInventory();
+
+
         if(!firstPlayer.isAcceptTrade() || !secondPlayer.isAcceptTrade()) {
-            if(tickSinceTradeAccept != 0) {
-                updateInventory();
-            }
             tickSinceTradeAccept = 0;
             return;
         }
@@ -98,6 +99,7 @@ public class Trade implements Listener {
     }
 
     public void updateInventory() {
+        if(!firstPlayer.isAcceptTrade() || !secondPlayer.isAcceptTrade()) tickSinceTradeAccept = 0;
         firstPlayer.getTradeInventory().openInventory();
         secondPlayer.getTradeInventory().openInventory();
     }

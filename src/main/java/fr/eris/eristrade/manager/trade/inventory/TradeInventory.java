@@ -53,6 +53,15 @@ public class TradeInventory extends ErisInventory {
                 inventorySize - 4, inventorySize - 3, inventorySize - 2, inventorySize - 1}) {
             inventoryMap.put(slot, ErisInventoryItem.create(() -> ItemCache.placeHolder));
         }
+
+        inventoryMap.put(inventorySize - 5, ErisInventoryItem.create(() ->
+                ItemBuilder.placeHolders(Material.BOOK, false).setDisplayName("&7How to use ?").setLore(
+                        "&2Right Click &7; &aShift + Right Click &7; &dMiddle Click &7; &4Left Click &7; &cShift + Left Click",
+                        "&7In your inventory : ",
+                        "  &7Add: &2Half Stack &7; &aHalf Total &7; &dA Stack &7; &41 Item ; &cTotal",
+                        "&7In the trade : ",
+                        "  &7Remove: &2Half Stack &7; &aHalf Total &7; &dA Stack &7; &41 Item ; &cTotal"
+                ).build()));
         if(ImplementationManager.getEconomy() != null) {
             updateOwnerTradedMoney(inventoryMap);
             updateTradedPlayerTradedMoney(inventoryMap);
@@ -72,7 +81,7 @@ public class TradeInventory extends ErisInventory {
         }, (event) -> {
             if(event.getCurrentItem().getDurability() != ItemCache.ItemColor.GRAY) {
                 ownerTradeData.setAcceptTrade(!ownerTradeData.isAcceptTrade());
-                openInventory();
+                targetTrade.updateInventory();
             }
         }));
     }
@@ -98,15 +107,15 @@ public class TradeInventory extends ErisInventory {
                 return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.GRAY, false)
                         .setDisplayName("&7You cannot trade nothing on both side !").build();
             }
-            return ItemBuilder.placeHolders(Material.WOOL, (targetTrade.getDataFromPlayer(getTradedPlayer()).isAcceptTrade()) ? ItemCache.ItemColor.LIME : ItemCache.ItemColor.RED, false)
-                    .setDisplayName((targetTrade.getDataFromPlayer(getTradedPlayer()).isAcceptTrade()) ? "&a" + getTradedPlayer().getName() + " has accepted the trade !" :
+            return ItemBuilder.placeHolders(Material.WOOL, (getTradedPlayerTradeDate().isAcceptTrade()) ? ItemCache.ItemColor.LIME : ItemCache.ItemColor.RED, false)
+                    .setDisplayName((getTradedPlayerTradeDate().isAcceptTrade()) ? "&a" + getTradedPlayer().getName() + " has accepted the trade !" :
                                         "&c" + getTradedPlayer().getName() + " doesn't have accepted the trade !").build();
         }));
     }
 
     public void updateTradedPlayerTradedMoney(HashMap<Integer, ErisInventoryItem> inventoryMap) throws ErisPluginException {
         inventoryMap.put(getInventoryRowAmount() * 9 - 2, ErisInventoryItem.create(() -> new ItemBuilder().setMaterial(Material.GOLD_NUGGET)
-                        .setDisplayName("&6Money: &e" + targetTrade.getDataFromPlayer(getTradedPlayer()).getTradedMoney()).build()));
+                        .setDisplayName("&6Money: &e" + getTradedPlayerTradeDate().getTradedMoney()).build()));
     }
 
     private void updateOwnerTradedItem(HashMap<Integer, ErisInventoryItem> inventoryMap) throws ErisPluginException {
@@ -120,7 +129,7 @@ public class TradeInventory extends ErisInventory {
                             new NBTItem(event.getCurrentItem()).getUUID("eristrade.itemkey")) == TradeData.RemoveItemError.NO_ERROR) {
                                 getTradedPlayer().playSound(getTradedPlayer().getLocation(), Sound.ITEM_PICKUP, 1000, 1000);
                                 owner.playSound(owner.getLocation(), Sound.ITEM_PICKUP, 1000, 1000);
-                                openInventory();
+                                targetTrade.updateInventory();
                         }
                     }
                 )
@@ -129,7 +138,7 @@ public class TradeInventory extends ErisInventory {
     }
 
     private void updateTradedPlayerTradedItem(HashMap<Integer, ErisInventoryItem> inventoryMap) throws ErisPluginException {
-        TradeData tradedPlayerData = targetTrade.getDataFromPlayer(getTradedPlayer());
+        TradeData tradedPlayerData = getTradedPlayerTradeDate();
         for(TradeItem tradeItem : tradedPlayerData.getCurrentTradedItem()) {
             int rawItemSlot = tradedPlayerData.getCurrentTradedItem().indexOf(tradeItem);
             int itemSlot = (int) (5 + (rawItemSlot % 4 + (Math.floor(rawItemSlot / 4f) * 9)));
@@ -139,6 +148,10 @@ public class TradeInventory extends ErisInventory {
 
     public Player getTradedPlayer() {
         return targetTrade.getOtherDataFromPlayer(owner).getPlayer();
+    }
+
+    public TradeData getTradedPlayerTradeDate() {
+        return targetTrade.getOtherDataFromPlayer(owner);
     }
 
     public void updateSeparator(HashMap<Integer, ErisInventoryItem> inventoryMap) throws ErisPluginException {

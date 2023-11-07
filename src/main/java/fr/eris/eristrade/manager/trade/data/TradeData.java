@@ -19,6 +19,7 @@ public class TradeData {
     @Getter @Setter private long tradedMoney;
     @Getter @Setter private boolean canClose;
     @Getter @Setter private boolean acceptTrade;
+
     private final Trade targetTrade;
 
     protected TradeData(Player player, String inventoryName, Trade targetTrade) {
