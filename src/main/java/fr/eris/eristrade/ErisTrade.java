@@ -5,6 +5,7 @@ import fr.eris.eristrade.manager.trade.TradeManager;
 import fr.eris.erisutils.ErisConfiguration;
 import fr.eris.erisutils.ErisUtils;
 import fr.eris.erisutils.manager.commands.CommandManager;
+import fr.eris.erisutils.manager.config.ConfigManager;
 import fr.eris.erisutils.utils.error.exception.ErisPluginException;
 import fr.eris.erisutils.utils.manager.ManagerEnabler;
 import fr.eris.erisutils.utils.manager.ManagerPriority;
@@ -25,6 +26,7 @@ public class ErisTrade extends JavaPlugin {
     /* <Manager> */
 
     /* Is loaded in priority with ErisUtils.setup() */ @Getter private static CommandManager commandManager;
+    /* Is loaded in priority with ErisUtils.setup() */ @Getter private static ConfigManager configManager;
     @ManagerPriority(initPriority = Priority.HIGH)  @Getter private static ImplementationManager implementationManager;
     @ManagerPriority(initPriority = Priority.NORMAL)  @Getter private static TradeManager tradeManager;
 

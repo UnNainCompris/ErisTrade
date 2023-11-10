@@ -1,10 +1,13 @@
 package fr.eris.eristrade.manager.trade;
 
+import fr.eris.eristrade.ErisTrade;
+import fr.eris.eristrade.manager.config.TestConfig;
 import fr.eris.eristrade.manager.trade.commands.TradeExecutor;
 import fr.eris.eristrade.manager.trade.data.Trade;
 import fr.eris.erisutils.utils.MessageBuilder;
 import fr.eris.erisutils.utils.bukkit.BukkitTasks;
 import fr.eris.erisutils.utils.bukkit.ColorUtils;
+import fr.eris.erisutils.utils.error.exception.ErisPluginException;
 import fr.eris.erisutils.utils.manager.Manager;
 import fr.eris.erisutils.utils.storage.Tuple;
 import lombok.Getter;
@@ -27,6 +30,11 @@ public class TradeManager extends Manager {
 
     public void start() {
         tradeRequestUpdaterTask = BukkitTasks.asyncTimer(this::tradeRequestUpdater, 3, 3);
+        try {
+            ErisTrade.getConfigManager().loadConfig(TestConfig.class);
+        } catch (ErisPluginException erisPluginException) {
+            erisPluginException.printStackTrace();
+        }
         new TradeExecutor();
     }
 

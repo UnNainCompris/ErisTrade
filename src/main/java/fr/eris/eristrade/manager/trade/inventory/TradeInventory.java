@@ -70,7 +70,7 @@ public class TradeInventory extends ErisInventory {
         updateTradedPlayerTradeValidation(inventoryMap);
     }
 
-    public void updateOwnerTradeValidation(HashMap<Integer, ErisInventoryItem> inventoryMap) throws ErisPluginException {
+    public void updateOwnerTradeValidation(HashMap<Integer, ErisInventoryItem> inventoryMap) {
         inventoryMap.put(getInventoryRowAmount() * 9 - 9, ErisInventoryItem.create(() -> {
             if(!targetTrade.isAnythingTraded()) {
                 return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.GRAY, false)
@@ -86,7 +86,7 @@ public class TradeInventory extends ErisInventory {
         }));
     }
 
-    public void updateOwnerTradedMoney(HashMap<Integer, ErisInventoryItem> inventoryMap) throws ErisPluginException {
+    public void updateOwnerTradedMoney(HashMap<Integer, ErisInventoryItem> inventoryMap) {
         inventoryMap.put(getInventoryRowAmount() * 9 - 8,
                 ErisInventoryItem.create(() -> new ItemBuilder().setMaterial(Material.GOLD_NUGGET).setDisplayName("&6Money: &e" + ownerTradeData.getTradedMoney()).setLore("&8Click to edit the amount !").build(),
                 (event) -> {
@@ -101,7 +101,7 @@ public class TradeInventory extends ErisInventory {
                 }));
     }
 
-    public void updateTradedPlayerTradeValidation(HashMap<Integer, ErisInventoryItem> inventoryMap) throws ErisPluginException {
+    public void updateTradedPlayerTradeValidation(HashMap<Integer, ErisInventoryItem> inventoryMap) {
         inventoryMap.put(getInventoryRowAmount() * 9 - 1, ErisInventoryItem.create(() -> {
             if(!targetTrade.isAnythingTraded()) {
                 return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.GRAY, false)
@@ -113,7 +113,7 @@ public class TradeInventory extends ErisInventory {
         }));
     }
 
-    public void updateTradedPlayerTradedMoney(HashMap<Integer, ErisInventoryItem> inventoryMap) throws ErisPluginException {
+    public void updateTradedPlayerTradedMoney(HashMap<Integer, ErisInventoryItem> inventoryMap) {
         inventoryMap.put(getInventoryRowAmount() * 9 - 2, ErisInventoryItem.create(() -> new ItemBuilder().setMaterial(Material.GOLD_NUGGET)
                         .setDisplayName("&6Money: &e" + getTradedPlayerTradeDate().getTradedMoney()).build()));
     }

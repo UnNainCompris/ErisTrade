@@ -31,10 +31,8 @@ public class TradeExecutor extends ErisSubCommandExecutor {
                       CommandArgument<?> targetedCommandArguments) {
         if(errorCode == CommandExecutionError.NOT_ENOUGH_ARGS) {
             sender.sendMessage(ColorUtils.translate("&c[x] &7Missing argument !"));
-            return;
         } else if(errorCode == CommandExecutionError.INVALID_ARGS) {
             sender.sendMessage(ColorUtils.translate("&c[x] &7Invalid argument !"));
-            return;
         }
     }
 
