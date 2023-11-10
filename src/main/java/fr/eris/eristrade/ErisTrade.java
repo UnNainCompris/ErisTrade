@@ -2,10 +2,12 @@ package fr.eris.eristrade;
 
 import fr.eris.eristrade.manager.impl.ImplementationManager;
 import fr.eris.eristrade.manager.trade.TradeManager;
+import fr.eris.eristrade.manager.trade.language.TradeLanguage;
 import fr.eris.erisutils.ErisConfiguration;
 import fr.eris.erisutils.ErisUtils;
 import fr.eris.erisutils.manager.commands.CommandManager;
 import fr.eris.erisutils.manager.config.ConfigManager;
+import fr.eris.erisutils.manager.language.LanguageManager;
 import fr.eris.erisutils.utils.error.exception.ErisPluginException;
 import fr.eris.erisutils.utils.manager.ManagerEnabler;
 import fr.eris.erisutils.utils.manager.ManagerPriority;
@@ -27,6 +29,7 @@ public class ErisTrade extends JavaPlugin {
 
     /* Is loaded in priority with ErisUtils.setup() */ @Getter private static CommandManager commandManager;
     /* Is loaded in priority with ErisUtils.setup() */ @Getter private static ConfigManager configManager;
+    /* Is loaded in priority with ErisUtils.setup() */ @Getter private static LanguageManager languageManager;
     @ManagerPriority(initPriority = Priority.HIGH)  @Getter private static ImplementationManager implementationManager;
     @ManagerPriority(initPriority = Priority.NORMAL)  @Getter private static TradeManager tradeManager;
 
@@ -48,6 +51,7 @@ public class ErisTrade extends JavaPlugin {
         }
         try {
             ErisUtils.setup(this);
+            ErisUtils.getPluginLanguageManager().loadLanguage(TradeLanguage.class);
         } catch (ErisPluginException erisPluginException) {
             erisPluginException.printStackTrace();
             Bukkit.getPluginManager().disablePlugin(this);
