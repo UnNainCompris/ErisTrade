@@ -16,7 +16,8 @@ public class TradeData {
     @Getter private final Player player;
     @Getter private final TradeInventory tradeInventory;
     @Getter private final List<TradeItem> currentTradedItem;
-    @Getter @Setter private long tradedMoney;
+    @Getter @Setter private double tradedMoney;
+    @Getter @Setter private int tradedExperience;
     @Getter @Setter private boolean canClose;
     @Getter @Setter private boolean acceptTrade;
 
@@ -27,6 +28,7 @@ public class TradeData {
         this.tradeInventory = new TradeInventory(inventoryName, player, this, targetTrade);
         this.currentTradedItem = new ArrayList<>();
         this.tradedMoney = 0;
+        this.tradedExperience = 0;
         this.targetTrade = targetTrade;
     }
 
@@ -37,7 +39,6 @@ public class TradeData {
             targetTrade.putTradeItemHasEdited(tradeItem);
             return AddItemError.NO_ERROR;
         }
-        System.out.println(currentTradedItem.size());
         if(currentTradedItem.size() >= 20)
             return AddItemError.TOO_MANY_ITEM;
         tradeItem = new TradeItem(item, amount);

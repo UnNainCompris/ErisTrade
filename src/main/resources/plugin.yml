@@ -1,3 +1,5 @@
 name: ErisTrade
 version: '${version}'
 main: fr.eris.eristrade.ErisTrade
+softdepend:
+  - Vault

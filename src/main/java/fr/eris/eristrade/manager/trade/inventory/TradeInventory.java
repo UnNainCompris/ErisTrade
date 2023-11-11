@@ -1,11 +1,20 @@
 package fr.eris.eristrade.manager.trade.inventory;
 
 import de.tr7zw.changeme.nbtapi.NBTItem;
+import fr.eris.eristrade.ErisTrade;
 import fr.eris.eristrade.manager.impl.ImplementationManager;
+import fr.eris.eristrade.manager.trade.config.TradeConfig;
 import fr.eris.eristrade.manager.trade.data.Trade;
 import fr.eris.eristrade.manager.trade.data.TradeData;
 import fr.eris.eristrade.manager.trade.data.TradeItem;
+import fr.eris.eristrade.manager.trade.language.TradeLanguage;
+import fr.eris.erisutils.ErisUtils;
+import fr.eris.erisutils.manager.language.data.LanguagePlaceholder;
+import fr.eris.erisutils.utils.asker.number.DoubleInteractiveAsker;
+import fr.eris.erisutils.utils.asker.number.IntegerInteractiveAsker;
+import fr.eris.erisutils.utils.bukkit.BukkitTasks;
 import fr.eris.erisutils.utils.bukkit.ColorUtils;
+import fr.eris.erisutils.utils.bukkit.PlayerUtils;
 import fr.eris.erisutils.utils.error.exception.ErisPluginException;
 import fr.eris.erisutils.utils.inventory.eris.ErisInventory;
 import fr.eris.erisutils.utils.inventory.eris.ErisInventoryItem;
@@ -55,16 +64,16 @@ public class TradeInventory extends ErisInventory {
         }
 
         inventoryMap.put(inventorySize - 5, ErisInventoryItem.create(() ->
-                ItemBuilder.placeHolders(Material.BOOK, false).setDisplayName("&7How to use ?").setLore(
-                        "&2Right Click &7; &aShift + Right Click &7; &dMiddle Click &7; &4Left Click &7; &cShift + Left Click",
-                        "&7In your inventory : ",
-                        "  &7Add: &2Half Stack &7; &aHalf Total &7; &dA Stack &7; &41 Item ; &cTotal",
-                        "&7In the trade : ",
-                        "  &7Remove: &2Half Stack &7; &aHalf Total &7; &dA Stack &7; &41 Item ; &cTotal"
+                ItemBuilder.placeHolders(Material.BOOK, false).setDisplayName(
+                        ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTradeInstructionItemName().getValue())
+                        .setLore(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTradeInstructionItemLore().getValue().split("\n")
                 ).build()));
-        if(ImplementationManager.getEconomy() != null) {
+        if(ImplementationManager.getEconomy() != null && ErisTrade.getConfigManager().getConfig(TradeConfig.class).getIsMoneyInTrade().getValue()) {
             updateOwnerTradedMoney(inventoryMap);
             updateTradedPlayerTradedMoney(inventoryMap);
+        } if (ErisTrade.getConfigManager().getConfig(TradeConfig.class).getIsExperienceInTrade().getValue()) {
+            updateOwnerTradedExperience(inventoryMap);
+            updateTradedPlayerTradedExperience(inventoryMap);
         }
         updateOwnerTradeValidation(inventoryMap);
         updateTradedPlayerTradeValidation(inventoryMap);
@@ -74,10 +83,12 @@ public class TradeInventory extends ErisInventory {
         inventoryMap.put(getInventoryRowAmount() * 9 - 9, ErisInventoryItem.create(() -> {
             if(!targetTrade.isAnythingTraded()) {
                 return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.GRAY, false)
-                        .setDisplayName("&7You cannot trade nothing on both side !").build();
+                        .setDisplayName(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getCannotTradeNoting().getValue()).build();
             }
             return ItemBuilder.placeHolders(Material.WOOL, (ownerTradeData.isAcceptTrade()) ? ItemCache.ItemColor.LIME : ItemCache.ItemColor.RED, false)
-                    .setDisplayName((ownerTradeData.isAcceptTrade()) ? "&cClick here to cancel the trade !" : "&aClick here to accept the trade !").build();
+                    .setDisplayName((ownerTradeData.isAcceptTrade()) ?
+                            ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getClickHereCancelTrade().getValue() :
+                            ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getClickHereAcceptTrade().getValue()).build();
         }, (event) -> {
             if(event.getCurrentItem().getDurability() != ItemCache.ItemColor.GRAY) {
                 ownerTradeData.setAcceptTrade(!ownerTradeData.isAcceptTrade());
@@ -88,16 +99,61 @@ public class TradeInventory extends ErisInventory {
 
     public void updateOwnerTradedMoney(HashMap<Integer, ErisInventoryItem> inventoryMap) {
         inventoryMap.put(getInventoryRowAmount() * 9 - 8,
-                ErisInventoryItem.create(() -> new ItemBuilder().setMaterial(Material.GOLD_NUGGET).setDisplayName("&6Money: &e" + ownerTradeData.getTradedMoney()).setLore("&8Click to edit the amount !").build(),
+                ErisInventoryItem.create(() -> new ItemBuilder().setMaterial(Material.GOLD_NUGGET).setDisplayName(
+                        ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTradedMoneyItemName().parsePlaceholders(
+                                LanguagePlaceholder.create("%value%", String.valueOf(ownerTradeData.getTradedMoney()))))
+                                .setLore(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getClickHereEditAmount().getValue()).build(),
                 (event) -> {
-                    owner.sendMessage(ColorUtils.translate("&c&lNot finished yet !"));
-                    //ownerTradeData.setCanClose(true);
-                    //new NumberAsker(owner, "Input the money you want to trade",
-                    //        (number) -> {
-                    //            if (ImplementationManager.getEconomy().getBalance(owner) >= number.longValue())
-                    //                ownerTradeData.setTradedMoney(number.longValue());
-                    //            else owner.sendMessage("&7You don't have enough money !");
-                    //        });
+                    ownerTradeData.setCanClose(true);
+                    new DoubleInteractiveAsker(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getInputMoney().getValue(), owner,
+                    (value) -> {
+                        value = Math.max(0, value);
+                        double maxMoneyInTrade = ErisTrade.getConfigManager().getConfig(TradeConfig.class).getMaxMoneyInTrade().getValue();
+                        if(maxMoneyInTrade > 0) {
+                            value = Math.min(maxMoneyInTrade, value);
+                        }
+                        if (ImplementationManager.getEconomy().getBalance(owner) >= value) {
+                            ownerTradeData.setAcceptTrade(false);
+                            ownerTradeData.setTradedMoney(value);
+                            targetTrade.updateInventory();
+                        }
+                        else ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getDontHaveEnoughMoney().sendMessage(owner);
+                        BukkitTasks.syncLater(() -> {
+                            forceOnlyOpen();
+                            ownerTradeData.setCanClose(false);
+                        }, 2L);
+                    }, Arrays.asList(0.1d, 1d, 100d, 1000d, 10000d), Arrays.asList(0.1d, 1d, 100d, 1000d, 10000d));
+                }));
+    }
+
+    public void updateOwnerTradedExperience(HashMap<Integer, ErisInventoryItem> inventoryMap) {
+        int slot = getInventoryRowAmount() * 9 - 8;
+        if(inventoryMap.get(slot).getItem().getType() != Material.STAINED_GLASS_PANE) slot++; // go to the slot next to the money
+        inventoryMap.put(slot,
+                ErisInventoryItem.create(() -> new ItemBuilder().setMaterial(Material.EXP_BOTTLE).setDisplayName(
+                        ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTradedExperienceItemName().parsePlaceholders(
+                        LanguagePlaceholder.create("%value%", String.valueOf(ownerTradeData.getTradedExperience()))))
+                                .setLore(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getClickHereEditAmount().getValue()).build(),
+                (event) -> {
+                    ownerTradeData.setCanClose(true);
+                    new IntegerInteractiveAsker(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getInputExperience().getValue(), owner,
+                        (value) -> {
+                            value = Math.max(0, value);
+                            int maxExperienceInTrade = ErisTrade.getConfigManager().getConfig(TradeConfig.class).getMaxExperienceInTrade().getValue();
+                            if(maxExperienceInTrade > 0) {
+                                value = Math.min(maxExperienceInTrade, value);
+                            }
+                            if (PlayerUtils.getPlayerExp(owner) >= value) {
+                                ownerTradeData.setTradedExperience(value);
+                                targetTrade.updateInventory();
+                                ownerTradeData.setAcceptTrade(false);
+                            }
+                            else ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getDontHaveEnoughExperience().sendMessage(owner);
+                            BukkitTasks.syncLater(() -> {
+                                forceOnlyOpen();
+                                ownerTradeData.setCanClose(false);
+                            }, 2L);
+                        }, Arrays.asList(1, 10, 100, 1000, 10000), Arrays.asList(1, 10, 100, 1000, 10000));
                 }));
     }
 
@@ -105,17 +161,29 @@ public class TradeInventory extends ErisInventory {
         inventoryMap.put(getInventoryRowAmount() * 9 - 1, ErisInventoryItem.create(() -> {
             if(!targetTrade.isAnythingTraded()) {
                 return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.GRAY, false)
-                        .setDisplayName("&7You cannot trade nothing on both side !").build();
+                        .setDisplayName(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getCannotTradeNoting().getValue()).build();
             }
             return ItemBuilder.placeHolders(Material.WOOL, (getTradedPlayerTradeDate().isAcceptTrade()) ? ItemCache.ItemColor.LIME : ItemCache.ItemColor.RED, false)
-                    .setDisplayName((getTradedPlayerTradeDate().isAcceptTrade()) ? "&a" + getTradedPlayer().getName() + " has accepted the trade !" :
-                                        "&c" + getTradedPlayer().getName() + " doesn't have accepted the trade !").build();
+                    .setDisplayName((getTradedPlayerTradeDate().isAcceptTrade()) ?
+                            ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTargetHaveAcceptTrade().parsePlaceholders(
+                            LanguagePlaceholder.create("%target%", getTradedPlayer().getName())) :
+                            ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTargetDontHaveAcceptTrade().parsePlaceholders(
+                                    LanguagePlaceholder.create("%target%", getTradedPlayer().getName()))).build();
         }));
     }
 
     public void updateTradedPlayerTradedMoney(HashMap<Integer, ErisInventoryItem> inventoryMap) {
         inventoryMap.put(getInventoryRowAmount() * 9 - 2, ErisInventoryItem.create(() -> new ItemBuilder().setMaterial(Material.GOLD_NUGGET)
-                        .setDisplayName("&6Money: &e" + getTradedPlayerTradeDate().getTradedMoney()).build()));
+                        .setDisplayName(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTradedMoneyItemName().parsePlaceholders(
+                                LanguagePlaceholder.create("%value%", String.valueOf(getTradedPlayerTradeDate().getTradedExperience())))).build()));
+    }
+
+    public void updateTradedPlayerTradedExperience(HashMap<Integer, ErisInventoryItem> inventoryMap) {
+        int slot = getInventoryRowAmount() * 9 - 2;
+        if(inventoryMap.get(slot).getItem().getType() != Material.STAINED_GLASS_PANE) slot--;
+        inventoryMap.put(slot, ErisInventoryItem.create(() -> new ItemBuilder().setMaterial(Material.EXP_BOTTLE)
+                .setDisplayName(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTradedExperienceItemName().parsePlaceholders(
+                        LanguagePlaceholder.create("%value%", String.valueOf(getTradedPlayerTradeDate().getTradedExperience())))).build()));
     }
 
     private void updateOwnerTradedItem(HashMap<Integer, ErisInventoryItem> inventoryMap) throws ErisPluginException {

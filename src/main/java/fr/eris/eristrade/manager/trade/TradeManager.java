@@ -1,8 +1,8 @@
 package fr.eris.eristrade.manager.trade;
 
 import fr.eris.eristrade.ErisTrade;
-import fr.eris.eristrade.manager.config.TestConfig;
 import fr.eris.eristrade.manager.trade.commands.TradeExecutor;
+import fr.eris.eristrade.manager.trade.config.TradeConfig;
 import fr.eris.eristrade.manager.trade.data.Trade;
 import fr.eris.eristrade.manager.trade.language.TradeLanguage;
 import fr.eris.erisutils.ErisUtils;
@@ -33,7 +33,7 @@ public class TradeManager extends Manager {
     public void start() {
         tradeRequestUpdaterTask = BukkitTasks.asyncTimer(this::tradeRequestUpdater, 3, 3);
         try {
-            ErisTrade.getConfigManager().loadConfig(TestConfig.class);
+            ErisTrade.getConfigManager().loadConfig(TradeConfig.class);
         } catch (ErisPluginException erisPluginException) {
             erisPluginException.printStackTrace();
         }
@@ -102,9 +102,9 @@ public class TradeManager extends Manager {
         MessageBuilder message = MessageBuilder.builder().addText(ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class)
                         .getReceiveTradeRequest().parsePlaceholders(LanguagePlaceholder.create("%requester%", from.getName())) +  "\n\n")
                 .addText("  &7|   ")
-                .addClickEvent(ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getAcceptTradeButton().getValue(), ClickEvent.Action.RUN_COMMAND, "/trade " + from.getName())
+                .addClickEvent(ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getAcceptTradeRequestButton().getValue(), ClickEvent.Action.RUN_COMMAND, "/trade " + from.getName())
                 .addText("    ")
-                .addClickEvent(ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getCancelTradeButton().getValue(), ClickEvent.Action.RUN_COMMAND, "/trade cancel " + from.getName())
+                .addClickEvent(ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getCancelTradeRequestButton().getValue(), ClickEvent.Action.RUN_COMMAND, "/trade cancel " + from.getName())
                 .addText("    &7|");
         message.sendMessage(to);
     }

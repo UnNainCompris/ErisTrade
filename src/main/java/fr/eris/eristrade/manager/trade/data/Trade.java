@@ -1,8 +1,14 @@
 package fr.eris.eristrade.manager.trade.data;
 
 import fr.eris.eristrade.ErisTrade;
+import fr.eris.eristrade.manager.impl.ImplementationManager;
+import fr.eris.eristrade.manager.trade.config.TradeConfig;
+import fr.eris.eristrade.manager.trade.language.TradeLanguage;
+import fr.eris.erisutils.manager.language.data.LanguagePlaceholder;
 import fr.eris.erisutils.utils.bukkit.BukkitTasks;
 import fr.eris.erisutils.utils.bukkit.ColorUtils;
+import fr.eris.erisutils.utils.bukkit.PlayerUtils;
+import fr.eris.erisutils.utils.storage.Tuple;
 import lombok.Getter;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
@@ -34,8 +40,10 @@ public class Trade implements Listener {
     private final List<TradeItem> recentlyUpdatedItem;
 
     public Trade(Player firstPlayer, Player secondPlayer) {
-        this.firstPlayer = new TradeData(firstPlayer, "&7Trade with: &6" + secondPlayer.getName(), this);
-        this.secondPlayer = new TradeData(secondPlayer, "&7Trade with: &6" + firstPlayer.getName(), this);
+        this.firstPlayer = new TradeData(firstPlayer, ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTradeInventoryName()
+                .parsePlaceholders(LanguagePlaceholder.create("%target%", secondPlayer.getName())), this);
+        this.secondPlayer = new TradeData(secondPlayer, ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTradeInventoryName()
+                .parsePlaceholders(LanguagePlaceholder.create("%target%", firstPlayer.getName())), this);
         this.recentlyUpdatedItem = new ArrayList<>();
         tradeTask = BukkitTasks.syncTimer(this::tradeTask, 1, 1);
         Bukkit.getServer().getPluginManager().registerEvents(this, ErisTrade.getInstance());
@@ -79,17 +87,17 @@ public class Trade implements Listener {
         }
         if(tickSinceTradeAccept == 120) {
             if(!isPlayerHasEnoughSpace(firstPlayer.getCurrentTradedItem(), secondPlayer.getPlayer())) {
-                firstPlayer.getPlayer().sendMessage(ColorUtils.translate("&c[x] &7" + secondPlayer.getPlayer().getName()
-                        + " don't have enough inventory space !"));
-                secondPlayer.getPlayer().sendMessage(ColorUtils.translate("&c[x] &7You don't have enough inventory space !"));
+                ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTargetDontHaveEnoughInventorySpace().sendMessage(firstPlayer.getPlayer(),
+                        LanguagePlaceholder.create("%target%", secondPlayer.getPlayer().getName()));
+                ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getSelfDontHaveEnoughInventorySpace().sendMessage(secondPlayer.getPlayer());
                 cancelTrade();
                 return;
             }
 
             if(!isPlayerHasEnoughSpace(secondPlayer.getCurrentTradedItem(), firstPlayer.getPlayer())) {
-                firstPlayer.getPlayer().sendMessage(ColorUtils.translate("&c[x] &7You don't have enough inventory space !"));
-                secondPlayer.getPlayer().sendMessage(ColorUtils.translate("&c[x] &7" + firstPlayer.getPlayer().getName()
-                        + " don't have enough inventory space !"));
+                ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getSelfDontHaveEnoughInventorySpace().sendMessage(firstPlayer.getPlayer());
+                ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTargetDontHaveEnoughInventorySpace().sendMessage(secondPlayer.getPlayer(),
+                        LanguagePlaceholder.create("%target%", firstPlayer.getPlayer().getName()));
                 cancelTrade();
                 return;
             }
@@ -106,7 +114,8 @@ public class Trade implements Listener {
 
     public boolean isAnythingTraded() {
         return !(firstPlayer.getCurrentTradedItem().isEmpty() && secondPlayer.getCurrentTradedItem().isEmpty()
-                && firstPlayer.getTradedMoney() == 0 && secondPlayer.getTradedMoney() == 0);
+                && firstPlayer.getTradedMoney() == 0 && secondPlayer.getTradedMoney() == 0
+                && firstPlayer.getTradedExperience() == 0 && secondPlayer.getTradedExperience() == 0);
     }
 
     public static int getAmountOfItemWithClickType(TradeItem targetTradeItem, ClickType clickType) {
@@ -267,6 +276,8 @@ public class Trade implements Listener {
 
     @EventHandler
     public void onInventoryClosed(InventoryCloseEvent event) {
+        if(getDataFromPlayer((Player) event.getPlayer()) != null)
+            if(getDataFromPlayer((Player) event.getPlayer()).isCanClose()) return;
         tradeCanceler(event.getPlayer());
     }
     @EventHandler
@@ -304,16 +315,28 @@ public class Trade implements Listener {
     }
 
     public void finishTrade() {
+        if(((!hasEnoughMoneyForTrade(firstPlayer) || !hasEnoughMoneyForTrade(secondPlayer)) && ImplementationManager.getEconomy() != null) ||
+                !hasEnoughExperienceForTrade(firstPlayer) || !hasEnoughExperienceForTrade(secondPlayer)) {
+            cancelTrade();
+            return;
+        }
         if(isTradeCanceled || isTradeFinished) return;
         isTradeFinished = true;
         destroy();
+        if(ImplementationManager.getEconomy() != null && ErisTrade.getConfigManager().getConfig(TradeConfig.class).getIsMoneyInTrade().getValue()) {
+            sendAndRemoveMoney(firstPlayer, secondPlayer);
+            sendAndRemoveMoney(secondPlayer, firstPlayer);
+        } if (ErisTrade.getConfigManager().getConfig(TradeConfig.class).getIsExperienceInTrade().getValue()) {
+            sendAndRemoveExperience(firstPlayer, secondPlayer);
+            sendAndRemoveExperience(secondPlayer, firstPlayer);
+        }
         addTradeItemAndDropOverflow(secondPlayer.getCurrentTradedItem(), firstPlayer.getPlayer());
         addTradeItemAndDropOverflow(firstPlayer.getCurrentTradedItem(), secondPlayer.getPlayer());
-        firstPlayer.getPlayer().sendMessage(ColorUtils.translate("&a[O] &7You successfully finished the trade with "
-                + secondPlayer.getPlayer().getName() + " ! &7(Check /trade log for more information)"));
+        ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getFinishTrade().sendMessage(firstPlayer.getPlayer(),
+                LanguagePlaceholder.create("%target%", secondPlayer.getPlayer().getName()));
+        ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getFinishTrade().sendMessage(secondPlayer.getPlayer(),
+                LanguagePlaceholder.create("%target%", firstPlayer.getPlayer().getName()));
         firstPlayer.getPlayer().playSound(firstPlayer.getPlayer().getLocation(), Sound.LEVEL_UP, 10000, 10000);
-        secondPlayer.getPlayer().sendMessage(ColorUtils.translate("&a[O] &7You successfully finished the trade with "
-                + firstPlayer.getPlayer().getName() + " ! &7(Check /trade log for more information)"));
         secondPlayer.getPlayer().playSound(secondPlayer.getPlayer().getLocation(), Sound.LEVEL_UP, 10000, 10000);
     }
 
@@ -325,9 +348,35 @@ public class Trade implements Listener {
         addTradeItemAndDropOverflow(secondPlayer.getCurrentTradedItem(), secondPlayer.getPlayer());
         firstPlayer.getPlayer().playSound(firstPlayer.getPlayer().getLocation(), Sound.FIZZ, 100, 100);
         secondPlayer.getPlayer().playSound(secondPlayer.getPlayer().getLocation(), Sound.FIZZ, 100, 100);
-        firstPlayer.getPlayer().sendMessage(ColorUtils.translate("&c[x] &7The trade with " + secondPlayer.getPlayer().getName() + " was canceled !"));
-        secondPlayer.getPlayer().sendMessage(ColorUtils.translate("&c[x] &7The trade with " + firstPlayer.getPlayer().getName() + " was canceled !"));
+        ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getCurrentTradeIsCanceled().sendMessage(firstPlayer.getPlayer(),
+                LanguagePlaceholder.create("%target%", secondPlayer.getPlayer().getName()));
+        ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getCurrentTradeIsCanceled().sendMessage(secondPlayer.getPlayer(),
+                LanguagePlaceholder.create("%target%", firstPlayer.getPlayer().getName()));
+    }
 
+    public void sendAndRemoveExperience(TradeData sender, TradeData receiver) {
+        if(hasEnoughExperienceForTrade(sender)) {
+            int newExp = PlayerUtils.getPlayerExp(sender.getPlayer()) - sender.getTradedExperience();
+            sender.getPlayer().setExp(0);
+            sender.getPlayer().setLevel(0);
+            sender.getPlayer().giveExp(newExp);
+            receiver.getPlayer().giveExp(sender.getTradedExperience());
+        }
+    }
+
+    public boolean hasEnoughExperienceForTrade(TradeData target) {
+        return PlayerUtils.getPlayerExp(target.getPlayer()) >= target.getTradedExperience();
+    }
+
+    public void sendAndRemoveMoney(TradeData sender, TradeData receiver) {
+        if(hasEnoughMoneyForTrade(sender)) {
+            ImplementationManager.getEconomy().withdrawPlayer(sender.getPlayer(), sender.getTradedMoney());
+            ImplementationManager.getEconomy().depositPlayer(receiver.getPlayer(), sender.getTradedMoney());
+        }
+    }
+
+    public boolean hasEnoughMoneyForTrade(TradeData target) {
+        return ImplementationManager.getEconomy() != null && ImplementationManager.getEconomy().getBalance(target.getPlayer()) >= target.getTradedMoney();
     }
 
     public void destroy() {
@@ -348,4 +397,6 @@ public class Trade implements Listener {
             }
         }
     }
+
+
 }
