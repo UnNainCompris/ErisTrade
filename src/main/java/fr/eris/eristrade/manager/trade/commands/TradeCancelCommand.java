@@ -1,14 +1,16 @@
 package fr.eris.eristrade.manager.trade.commands;
 
 import fr.eris.eristrade.ErisTrade;
+import fr.eris.eristrade.manager.trade.language.TradeLanguage;
+import fr.eris.erisutils.ErisUtils;
 import fr.eris.erisutils.manager.commands.ErisCommand;
 import fr.eris.erisutils.manager.commands.ErisSubCommand;
 import fr.eris.erisutils.manager.commands.args.CommandArgument;
 import fr.eris.erisutils.manager.commands.args.PlayerCommandArgument;
-import fr.eris.erisutils.utils.bukkit.ColorUtils;
+import fr.eris.erisutils.manager.commands.language.CommandLanguage;
+import fr.eris.erisutils.manager.language.data.LanguagePlaceholder;
 import fr.eris.erisutils.utils.storage.Tuple;
 import lombok.NonNull;
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -28,7 +30,8 @@ public class TradeCancelCommand extends ErisSubCommand {
         Player player = (Player) sender;
         Player target = args.get(0).convert(Player.class).getValue();
         if(!ErisTrade.getTradeManager().hasSendTradeRequest(player, target) && !ErisTrade.getTradeManager().hasSendTradeRequest(target, player)) {
-            sender.sendMessage(ColorUtils.translate("&c[x] &7" + target.getName() + " &7doesn't send you (or you sent to him) a trade request !!"));
+            ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getTargetDoesntSendRequest().sendMessage(player,
+                    LanguagePlaceholder.create("%target%", target.getName()));
             return;
         }
         ErisTrade.getTradeManager().removeTradeRequest(player, target);
@@ -38,12 +41,13 @@ public class TradeCancelCommand extends ErisSubCommand {
     public void error(CommandSender sender, ErisCommand.CommandExecutionError errorCode, String[] argsValue, String targetedArgs, CommandArgument<?> targetedCommandArguments) {
         if(errorCode == ErisCommand.CommandExecutionError.INVALID_ARGS) {
             if (targetedCommandArguments instanceof PlayerCommandArgument) {
-                sender.sendMessage(ColorUtils.translate("&c[x] &7" + targetedArgs + " &7doesn't send you (or you sent to him) a trade request !"));
+                ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getTargetDoesntSendRequest().sendMessage(sender,
+                        LanguagePlaceholder.create("%target%", targetedArgs));
                 return;
             }
         } if(errorCode == ErisCommand.CommandExecutionError.NOT_ENOUGH_ARGS) {
             if (targetedCommandArguments instanceof PlayerCommandArgument) {
-                sender.sendMessage(ColorUtils.translate("&c[x] &7Missing argument !"));
+                ErisUtils.getPluginLanguageManager().getLanguage(CommandLanguage.class).getMissingArgument().sendMessage(sender);
                 return;
             }
         }

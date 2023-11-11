@@ -1,10 +1,14 @@
 package fr.eris.eristrade.manager.trade.commands;
 
 import fr.eris.eristrade.ErisTrade;
+import fr.eris.eristrade.manager.trade.language.TradeLanguage;
+import fr.eris.erisutils.ErisUtils;
 import fr.eris.erisutils.manager.commands.ErisSubCommand;
 import fr.eris.erisutils.manager.commands.ErisSubCommandExecutor;
 import fr.eris.erisutils.manager.commands.args.CommandArgument;
 import fr.eris.erisutils.manager.commands.args.StringCommandArgument;
+import fr.eris.erisutils.manager.commands.language.CommandLanguage;
+import fr.eris.erisutils.manager.language.data.LanguagePlaceholder;
 import fr.eris.erisutils.utils.bukkit.ColorUtils;
 import fr.eris.erisutils.utils.bukkit.PlayerUtils;
 import lombok.NonNull;
@@ -30,9 +34,9 @@ public class TradeExecutor extends ErisSubCommandExecutor {
     public void error(CommandSender sender, CommandExecutionError errorCode, String[] argsValue, String targetedArgs,
                       CommandArgument<?> targetedCommandArguments) {
         if(errorCode == CommandExecutionError.NOT_ENOUGH_ARGS) {
-            sender.sendMessage(ColorUtils.translate("&c[x] &7Missing argument !"));
+            ErisUtils.getPluginLanguageManager().getLanguage(CommandLanguage.class).getMissingArgument().sendMessage(sender);
         } else if(errorCode == CommandExecutionError.INVALID_ARGS) {
-            sender.sendMessage(ColorUtils.translate("&c[x] &7Invalid argument !"));
+            ErisUtils.getPluginLanguageManager().getLanguage(CommandLanguage.class).getInvalidArgument().sendMessage(sender);
         }
     }
 
@@ -46,18 +50,20 @@ public class TradeExecutor extends ErisSubCommandExecutor {
         Player player = (Player) sender;
         Player target;
         if(args == null || args.isEmpty()) {
-            player.sendMessage(ColorUtils.translate("&c[x] &7Missing argument !"));
+            ErisUtils.getPluginLanguageManager().getLanguage(CommandLanguage.class).getMissingArgument().sendMessage(player);
             return;
         }
         if((target = Bukkit.getPlayer(args.get(0).convert(String.class).getValue())) == null) {
-            player.sendMessage(ColorUtils.translate("&c[x] &7The player " + args.get(0).convert(String.class).getValue() + " is not connected !"));
+            ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getTargetNotConnected().sendMessage(player,
+                    LanguagePlaceholder.create("%target%", args.get(0).convert(String.class).getValue()));
             return;
         }
         if(player.equals(target)) {
-            player.sendMessage(ColorUtils.translate("&c[x] &7You can't trade with yourself !"));
+            ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getCannotTradeYourself().sendMessage(player);
             return;
         } if(ErisTrade.getTradeManager().hasSendTradeRequest(player, target)) {
-            player.sendMessage(ColorUtils.translate("&c[x] &7" + target.getDisplayName() + " &7is already invited to trade !"));
+            ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getAlreadyInvitedToTrade().sendMessage(player,
+                    LanguagePlaceholder.create("%target%", target.getName()));
             return;
         }
         ErisTrade.getTradeManager().sendTradeRequest(player, target);

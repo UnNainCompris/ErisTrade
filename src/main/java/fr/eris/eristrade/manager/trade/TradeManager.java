@@ -4,9 +4,11 @@ import fr.eris.eristrade.ErisTrade;
 import fr.eris.eristrade.manager.config.TestConfig;
 import fr.eris.eristrade.manager.trade.commands.TradeExecutor;
 import fr.eris.eristrade.manager.trade.data.Trade;
+import fr.eris.eristrade.manager.trade.language.TradeLanguage;
+import fr.eris.erisutils.ErisUtils;
+import fr.eris.erisutils.manager.language.data.LanguagePlaceholder;
 import fr.eris.erisutils.utils.MessageBuilder;
 import fr.eris.erisutils.utils.bukkit.BukkitTasks;
-import fr.eris.erisutils.utils.bukkit.ColorUtils;
 import fr.eris.erisutils.utils.error.exception.ErisPluginException;
 import fr.eris.erisutils.utils.manager.Manager;
 import fr.eris.erisutils.utils.storage.Tuple;
@@ -47,8 +49,10 @@ public class TradeManager extends Manager {
         for(Player player : tradeRequestCache.keySet()) {
             Tuple<Long, Player> value = tradeRequestCache.get(player);
             if(System.currentTimeMillis() - value.getFirst() > timeBeforeTradeRequestDelete) {
-                player.sendMessage(ColorUtils.translate("&7The trade request send to &6" + value.getSecond().getName() + " &7was canceled !"));
-                value.getSecond().sendMessage(ColorUtils.translate("&7The trade request from &6" + player.getName() + " &7was canceled !"));
+                ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getSentTradeRequestCanceled().sendMessage(
+                        player, LanguagePlaceholder.create("%target%", value.getSecond().getName()));
+                ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getReceivedTradeRequestCanceled().sendMessage(
+                        value.getSecond(), LanguagePlaceholder.create("%requester%", player.getName()));
                 tradeRequestCache.remove(player);
             }
         }
@@ -93,12 +97,14 @@ public class TradeManager extends Manager {
             return;
         }
         tradeRequestCache.put(from, new Tuple<>(System.currentTimeMillis(), to));
-        from.sendMessage(ColorUtils.translate("&7You send a trade request to " + to.getName() + " !"));
-        MessageBuilder message = MessageBuilder.builder().addText("&7You get a trade request from " + from.getName() + " ! \n\n")
+        ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getSendTradeRequest().sendMessage(
+                from, LanguagePlaceholder.create("%target%", to.getName()));
+        MessageBuilder message = MessageBuilder.builder().addText(ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class)
+                        .getReceiveTradeRequest().parsePlaceholders(LanguagePlaceholder.create("%requester%", from.getName())) +  "\n\n")
                 .addText("  &7|   ")
-                .addClickEvent("&a&l[ACCEPT]", ClickEvent.Action.RUN_COMMAND, "/trade " + from.getName())
+                .addClickEvent(ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getAcceptTradeButton().getValue(), ClickEvent.Action.RUN_COMMAND, "/trade " + from.getName())
                 .addText("    ")
-                .addClickEvent("&c&l[CANCEL]", ClickEvent.Action.RUN_COMMAND, "/trade cancel " + from.getName())
+                .addClickEvent(ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getCancelTradeButton().getValue(), ClickEvent.Action.RUN_COMMAND, "/trade cancel " + from.getName())
                 .addText("    &7|");
         message.sendMessage(to);
     }
@@ -113,8 +119,10 @@ public class TradeManager extends Manager {
         Player requested = sortedPlayer.getSecond();
 
         if(requested != null && requester != null) {
-            requester.sendMessage(ColorUtils.translate("&7The trade request you sent to &6" + requested.getName() + " &7was canceled !"));
-            requested.sendMessage(ColorUtils.translate("&7The trade request from &6" + requester.getName() + " &7was canceled !"));
+            ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getSentTradeRequestCanceled().sendMessage(
+                    requester, LanguagePlaceholder.create("%target%", requested.getName()));
+            ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getReceivedTradeRequestCanceled().sendMessage(
+                    requested, LanguagePlaceholder.create("%requester%", requester.getName()));
             tradeRequestCache.remove(requester);
         }
     }
