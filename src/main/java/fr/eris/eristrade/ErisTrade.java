@@ -8,6 +8,8 @@ import fr.eris.erisutils.ErisUtils;
 import fr.eris.erisutils.manager.commands.CommandManager;
 import fr.eris.erisutils.manager.config.ConfigManager;
 import fr.eris.erisutils.manager.language.LanguageManager;
+import fr.eris.erisutils.manager.playerdata.PlayerDataManager;
+import fr.eris.erisutils.manager.playerdata.data.PlayerData;
 import fr.eris.erisutils.utils.error.exception.ErisPluginException;
 import fr.eris.erisutils.utils.manager.ManagerEnabler;
 import fr.eris.erisutils.utils.manager.ManagerPriority;
@@ -30,6 +32,7 @@ public class ErisTrade extends JavaPlugin {
     /* Is loaded in priority with ErisUtils.setup() */ @Getter private static CommandManager commandManager;
     /* Is loaded in priority with ErisUtils.setup() */ @Getter private static ConfigManager configManager;
     /* Is loaded in priority with ErisUtils.setup() */ @Getter private static LanguageManager languageManager;
+    /* Is loaded in priority with ErisUtils.setup() */ @Getter private static PlayerDataManager<PlayerData> playerDataManager; // unused
     @ManagerPriority(initPriority = Priority.HIGH)  @Getter private static ImplementationManager implementationManager;
     @ManagerPriority(initPriority = Priority.NORMAL)  @Getter private static TradeManager tradeManager;
 
