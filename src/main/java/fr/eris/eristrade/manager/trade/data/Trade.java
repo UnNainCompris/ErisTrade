@@ -249,27 +249,27 @@ public class Trade implements Listener {
             recentlyUpdatedItem.add(tradeItem);
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerInteractEvent(PlayerInteractEvent event) {
         tradeCanceler(event.getPlayer());
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerInteractAtEntityEvent(PlayerInteractAtEntityEvent event) {
         tradeCanceler(event.getPlayer());
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerInteractEntityEvent(PlayerInteractEntityEvent event) {
         tradeCanceler(event.getPlayer());
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerPickupItem(PlayerPickupItemEvent event) {
         tradeCanceler(event.getPlayer());
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerProcessCommand(PlayerCommandPreprocessEvent event) {
         tradeCanceler(event.getPlayer());
     }
@@ -280,19 +280,19 @@ public class Trade implements Listener {
             if(getDataFromPlayer((Player) event.getPlayer()).isCanClose()) return;
         tradeCanceler(event.getPlayer());
     }
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerMove(PlayerMoveEvent event) {
         Location from = event.getFrom(), to = event.getTo();
         if(from.getBlockX() == to.getBlockX() && from.getBlockY() == to.getBlockY() && from.getBlockZ() == to.getBlockZ()) return;
         tradeCanceler(event.getPlayer());
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerDamage(EntityDamageEvent event) {
         tradeCanceler(event.getEntity());
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerDeath(PlayerDeathEvent event) {
         tradeCanceler(event.getEntity());
     }
@@ -302,7 +302,7 @@ public class Trade implements Listener {
         tradeCanceler(event.getPlayer());
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         tradeCanceler(event.getPlayer());
     }

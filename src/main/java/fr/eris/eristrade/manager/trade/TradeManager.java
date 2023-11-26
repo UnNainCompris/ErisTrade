@@ -98,12 +98,14 @@ public class TradeManager extends Manager {
             if(requester.getLocation().distance(requested.getLocation()) > maxDistance) {
                 ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getPlayerTooFarAway().sendMessage(
                         requester, LanguagePlaceholder.create("%target%", requested.getName()));
+                removeTradeRequest(requester, requested, false);
                 return false;
             }
         }
         if(!requester.getWorld().equals(requested.getWorld()) && !canTradeInDifferentWorld) {
             ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getNotInSameWorld().sendMessage(
                     requester, LanguagePlaceholder.create("%target%", requested.getName()));
+            removeTradeRequest(requester, requested, false);
             return false;
         }
 
@@ -117,15 +119,18 @@ public class TradeManager extends Manager {
         if(!requester.getWorld().equals(requested.getWorld()) && !canTradeInDifferentWorld) {
             ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getNotInSameWorld().sendMessage(
                     requester, LanguagePlaceholder.create("%target%", requested.getName()));
+            removeTradeRequest(requester, requested, false);
             return false;
         }
         List<String> splitDisabledWorldName = Arrays.asList(disabledWorld.split(";"));
         if(splitDisabledWorldName.contains(requester.getWorld().getName())) {
             ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getInvalidSelfWorld().sendMessage(requester);
+            removeTradeRequest(requester, requested, false);
             return false;
         } else if(splitDisabledWorldName.contains(requested.getWorld().getName())) {
             ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getInvalidTargetWorld().sendMessage(
                     requester, LanguagePlaceholder.create("%target%", requested.getName()));
+            removeTradeRequest(requester, requested, false);
             return false;
         }
 
@@ -158,16 +163,18 @@ public class TradeManager extends Manager {
         return target.equals(tradeRequestCache.getOrDefault(player, new Tuple<>(null, null)).getSecond());
     }
 
-    public void removeTradeRequest(Player firstPlayer, Player secondPlayer) {
+    public void removeTradeRequest(Player firstPlayer, Player secondPlayer, boolean silent) {
         Tuple<Player, Player> sortedPlayer = sortSenderRequested(firstPlayer, secondPlayer);
         Player requester = sortedPlayer.getFirst();
         Player requested = sortedPlayer.getSecond();
 
         if(requested != null && requester != null) {
-            ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getSentTradeRequestCanceled().sendMessage(
-                    requester, LanguagePlaceholder.create("%target%", requested.getName()));
-            ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getReceivedTradeRequestCanceled().sendMessage(
-                    requested, LanguagePlaceholder.create("%requester%", requester.getName()));
+            if(!silent) {
+                ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getSentTradeRequestCanceled().sendMessage(
+                        requester, LanguagePlaceholder.create("%target%", requested.getName()));
+                ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getReceivedTradeRequestCanceled().sendMessage(
+                        requested, LanguagePlaceholder.create("%requester%", requester.getName()));
+            }
             tradeRequestCache.remove(requester);
         }
     }

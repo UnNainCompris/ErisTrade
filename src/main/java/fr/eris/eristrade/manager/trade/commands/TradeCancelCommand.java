@@ -34,7 +34,7 @@ public class TradeCancelCommand extends ErisSubCommand {
                     LanguagePlaceholder.create("%target%", target.getName()));
             return;
         }
-        ErisTrade.getTradeManager().removeTradeRequest(player, target);
+        ErisTrade.getTradeManager().removeTradeRequest(player, target, false);
     }
 
     @Override
