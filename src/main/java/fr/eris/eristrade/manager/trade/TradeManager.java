@@ -19,6 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -81,11 +82,54 @@ public class TradeManager extends Manager {
     }
 
     public void startTrade(Player requester, Player requested) {
+        if(!checkPlayerWorld(requester, requested) || !checkPlayerDistance(requester, requested)) return;
         requester = Bukkit.getPlayer(requester.getUniqueId()); // use to update the player (avoid dupe)
         requested = Bukkit.getPlayer(requested.getUniqueId()); // use to update the player (avoid dupe)
         Trade trade = new Trade(requester, requested);
         currentTrade.add(trade);
         tradeRequestCache.remove(requester);
+    }
+
+    private boolean checkPlayerDistance(Player requester, Player requested) {
+        boolean canTradeInDifferentWorld = ErisTrade.getConfigManager().getConfig(TradeConfig.class).getAllowDifferentWorldTrading().getValue();
+        double maxDistance = ErisTrade.getConfigManager().getConfig(TradeConfig.class).getDistanceBetweenPlayer().getValue();
+
+        if(requester.getWorld().equals(requested.getWorld())) {
+            if(requester.getLocation().distance(requested.getLocation()) > maxDistance) {
+                ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getPlayerTooFarAway().sendMessage(
+                        requester, LanguagePlaceholder.create("%target%", requested.getName()));
+                return false;
+            }
+        }
+        if(!requester.getWorld().equals(requested.getWorld()) && !canTradeInDifferentWorld) {
+            ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getNotInSameWorld().sendMessage(
+                    requester, LanguagePlaceholder.create("%target%", requested.getName()));
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean checkPlayerWorld(Player requester, Player requested) {
+        boolean canTradeInDifferentWorld = ErisTrade.getConfigManager().getConfig(TradeConfig.class).getAllowDifferentWorldTrading().getValue();
+        String disabledWorld = ErisTrade.getConfigManager().getConfig(TradeConfig.class).getDisabledInWorld().getValue();
+
+        if(!requester.getWorld().equals(requested.getWorld()) && !canTradeInDifferentWorld) {
+            ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getNotInSameWorld().sendMessage(
+                    requester, LanguagePlaceholder.create("%target%", requested.getName()));
+            return false;
+        }
+        List<String> splitDisabledWorldName = Arrays.asList(disabledWorld.split(";"));
+        if(splitDisabledWorldName.contains(requester.getWorld().getName())) {
+            ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getInvalidSelfWorld().sendMessage(requester);
+            return false;
+        } else if(splitDisabledWorldName.contains(requested.getWorld().getName())) {
+            ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getInvalidTargetWorld().sendMessage(
+                    requester, LanguagePlaceholder.create("%target%", requested.getName()));
+            return false;
+        }
+
+        return true;
     }
 
     public void sendTradeRequest(Player from, Player to) {
@@ -96,6 +140,7 @@ public class TradeManager extends Manager {
             startTrade(to, from);
             return;
         }
+        if(!checkPlayerWorld(from, to) || !checkPlayerDistance(from, to)) return;
         tradeRequestCache.put(from, new Tuple<>(System.currentTimeMillis(), to));
         ErisUtils.getPluginLanguageManager().getLanguage(TradeLanguage.class).getSendTradeRequest().sendMessage(
                 from, LanguagePlaceholder.create("%target%", to.getName()));

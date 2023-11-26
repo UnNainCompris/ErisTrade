@@ -34,6 +34,11 @@ public class TradeLanguage extends Language {
     @Expose @Getter private LanguageValue inputMoney = new LanguageValue("&7Input the money you want to trade");
     @Expose @Getter private LanguageValue inputExperience = new LanguageValue("&7Input the experience you want to trade");
 
+    @Expose @Getter private LanguageValue playerTooFarAway = new LanguageValue("&c[x] &7%target% is too far away !");
+    @Expose @Getter private LanguageValue notInSameWorld = new LanguageValue("&c[x] &7%target% and you are not in the same world !");
+    @Expose @Getter private LanguageValue invalidSelfWorld = new LanguageValue("&c[x] &7The world you are currently in does not support trade !");
+    @Expose @Getter private LanguageValue invalidTargetWorld = new LanguageValue("&c[x] &7The world where %target% is currently in does not support trade !");
+
     @Expose @Getter private LanguageValue acceptTradeRequestButton = new LanguageValue("&a&l[ACCEPT]");
     @Expose @Getter private LanguageValue cancelTradeRequestButton = new LanguageValue("&c&l[CANCEL]");
 
