@@ -47,10 +47,10 @@ public class Trade implements Listener {
                 .parsePlaceholders(LanguagePlaceholder.create("%target%", firstPlayer.getName())), this);
         this.recentlyUpdatedItem = new ArrayList<>();
         tradeTask = BukkitTasks.syncTimer(this::tradeTask, 1, 1);
-        Bukkit.getServer().getPluginManager().registerEvents(this, ErisTrade.getInstance());
         updateInventory();
         this.firstPlayer.getTradeInventory().forceOnlyOpen();
         this.secondPlayer.getTradeInventory().forceOnlyOpen();
+        Bukkit.getServer().getPluginManager().registerEvents(this, ErisTrade.getInstance());
     }
 
     public void tradeTask() {
@@ -108,6 +108,7 @@ public class Trade implements Listener {
     }
 
     public void updateInventory() {
+        if (isTradeCanceled || isTradeFinished) return;
         if(!firstPlayer.isAcceptTrade() || !secondPlayer.isAcceptTrade()) tickSinceTradeAccept = 0;
         firstPlayer.getTradeInventory().openInventory();
         secondPlayer.getTradeInventory().openInventory();
