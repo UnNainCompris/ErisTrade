@@ -37,7 +37,7 @@ public class TradeInventory extends ErisInventory {
 
 
     public TradeInventory(String inventoryName, Player owner, TradeData ownerTradeData, Trade targetTrade) {
-        super(6, inventoryName, owner);
+        super(6, inventoryName, owner, new TradeInventoryHolder(ownerTradeData));
         this.ownerTradeData = ownerTradeData;
         this.targetTrade = targetTrade;
         this.getInventoryStateData().setAllowedToClose(true);

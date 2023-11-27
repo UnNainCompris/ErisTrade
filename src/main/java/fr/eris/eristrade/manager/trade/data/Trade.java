@@ -3,6 +3,7 @@ package fr.eris.eristrade.manager.trade.data;
 import fr.eris.eristrade.ErisTrade;
 import fr.eris.eristrade.manager.impl.ImplementationManager;
 import fr.eris.eristrade.manager.trade.config.TradeConfig;
+import fr.eris.eristrade.manager.trade.inventory.TradeInventoryHolder;
 import fr.eris.eristrade.manager.trade.language.TradeLanguage;
 import fr.eris.erisutils.manager.language.data.LanguagePlaceholder;
 import fr.eris.erisutils.utils.bukkit.BukkitTasks;
@@ -211,6 +212,19 @@ public class Trade implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
+        if(event.getInventory().getHolder() != null && event.getInventory().getHolder() instanceof TradeInventoryHolder) {
+            TradeInventoryHolder tradeInventoryHolder = (TradeInventoryHolder) event.getInventory().getHolder();
+            Trade trade = tradeInventoryHolder.getPlayerTradeData().getTargetTrade();
+            if(trade.isTradeCanceled) {
+                trade.cancelTrade();
+            }
+            event.setCancelled(true);
+            if(trade.getFirstPlayer().getPlayer().getOpenInventory() == null || trade.getSecondPlayer().getPlayer().getOpenInventory() == null) {
+                trade.cancelTrade();
+                trade.getFirstPlayer().getPlayer().closeInventory();
+                trade.getSecondPlayer().getPlayer().closeInventory();
+            }
+        }
         if(event.getClickedInventory() == null) return;
         if(event.getClickedInventory().getType() != InventoryType.PLAYER) return;
         if(!(event.getWhoClicked() instanceof Player)) return;
@@ -380,11 +394,20 @@ public class Trade implements Listener {
     }
 
     public void destroy() {
+        tradeTask.cancel();
+        firstPlayer.getTradeInventory().closeInventory();
+        secondPlayer.getTradeInventory().closeInventory();
         firstPlayer.getTradeInventory().delete();
         secondPlayer.getTradeInventory().delete();
-        tradeTask.cancel();
-        ErisTrade.getTradeManager().removeTrade(this);
-        HandlerList.unregisterAll(this);
+        BukkitTasks.asyncLater(() -> {
+            ErisTrade.getTradeManager().removeTrade(this);
+            HandlerList.unregisterAll(this);
+            firstPlayer.getTradeInventory().closeInventory();
+            secondPlayer.getTradeInventory().closeInventory();
+            firstPlayer.getTradeInventory().delete();
+            secondPlayer.getTradeInventory().delete();
+        }, 10);
+
     }
 
     public void addTradeItemAndDropOverflow(List<TradeItem> toGive, Player target) {
@@ -397,6 +420,4 @@ public class Trade implements Listener {
             }
         }
     }
-
-
 }

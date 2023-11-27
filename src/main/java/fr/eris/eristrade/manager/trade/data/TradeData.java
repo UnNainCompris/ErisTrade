@@ -21,7 +21,7 @@ public class TradeData {
     @Getter @Setter private boolean canClose;
     @Getter @Setter private boolean acceptTrade;
 
-    private final Trade targetTrade;
+    @Getter private final Trade targetTrade;
 
     protected TradeData(Player player, String inventoryName, Trade targetTrade) {
         this.player = player;
