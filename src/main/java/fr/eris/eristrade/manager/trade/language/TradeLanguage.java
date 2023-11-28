@@ -12,6 +12,15 @@ public class TradeLanguage extends Language {
     @Expose @Getter private LanguageValue sendTradeRequest = new LanguageValue("&a[o] &7Successfully send trade request to %target% !");
     @Expose @Getter private LanguageValue receiveTradeRequest = new LanguageValue("&a[!] &7You get a trade request from %requester% !");
 
+    @Expose @Getter private LanguageValue upItemName = new LanguageValue("&6Up");
+    @Expose @Getter private LanguageValue downItemName = new LanguageValue("&9Down");
+    @Expose @Getter private LanguageValue requesterItemHeadName = new LanguageValue("&7Requester: &6%requester%");
+    @Expose @Getter private LanguageValue requestedItemHeadName = new LanguageValue("&7Requested Player: &6%requested%");
+    @Expose @Getter private LanguageValue tradeInfoItemName = new LanguageValue("&7Trade between &6%requester% and &6%requested% &7[%tradeDays%/%tradeMonths%/%tradeYears% ; %amountOfDaysPassed% day ago] &8[%timeTradeViewed%]");
+    @Expose @Getter private LanguageValue tradePrivacyItemName = new LanguageValue("&7Privacy: %privacy%");
+    @Expose @Getter private LanguageValue privacyPrivate = new LanguageValue("&cPrivate");
+    @Expose @Getter private LanguageValue privacyPublic = new LanguageValue("&aPublic");
+
     @Expose @Getter private LanguageValue cannotTradeYourself = new LanguageValue("&c[x] &7You can't trade with yourself !");
     @Expose @Getter private LanguageValue alreadyInvitedToTrade = new LanguageValue("&c[x] &7%target% is already invited to trade !");
     @Expose @Getter private LanguageValue targetNotConnected = new LanguageValue("&c[x] &7The player %target% is not connected !");

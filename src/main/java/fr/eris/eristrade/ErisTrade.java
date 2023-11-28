@@ -1,6 +1,7 @@
 package fr.eris.eristrade;
 
 import fr.eris.eristrade.manager.impl.ImplementationManager;
+import fr.eris.eristrade.manager.playerdata.data.PlayerData;
 import fr.eris.eristrade.manager.trade.TradeManager;
 import fr.eris.eristrade.manager.trade.language.TradeLanguage;
 import fr.eris.erisutils.ErisConfiguration;
@@ -9,7 +10,6 @@ import fr.eris.erisutils.manager.commands.CommandManager;
 import fr.eris.erisutils.manager.config.ConfigManager;
 import fr.eris.erisutils.manager.language.LanguageManager;
 import fr.eris.erisutils.manager.playerdata.PlayerDataManager;
-import fr.eris.erisutils.manager.playerdata.data.PlayerData;
 import fr.eris.erisutils.utils.error.exception.ErisPluginException;
 import fr.eris.erisutils.utils.manager.ManagerEnabler;
 import fr.eris.erisutils.utils.manager.ManagerPriority;
@@ -20,7 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.logging.Level;
 
-@ErisConfiguration(name = "ErisTrade", permissionPrefix = "eristrade", version = "0.5-BETA")
+@ErisConfiguration(name = "ErisTrade", permissionPrefix = "eristrade", version = "${version}")
 public class ErisTrade extends JavaPlugin {
 
     @Getter private static ErisTrade instance;

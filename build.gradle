@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'fr.eris'
-version = '0.5-BETA'
+version = '0.8-BETA'
 
 repositories {
 
@@ -63,6 +63,9 @@ processResources {
     def props = [version: version]
     inputs.properties props
     filteringCharset 'UTF-8'
+    filesMatching('ErisTrade.java') {
+        expand props
+    }
     filesMatching('plugin.yml') {
         expand props
     }

@@ -237,8 +237,21 @@ public class TradeInventory extends ErisInventory {
             else itemColor = ItemCache.ItemColor.GRAY;
 
             ItemBuilder separator = ItemBuilder.placeHolders(Material.STAINED_GLASS_PANE, itemColor, glowing);
+            if(slot == 4) {
+                separator.setDurability((targetTrade.isPublic()) ? ItemCache.ItemColor.GREEN : ItemCache.ItemColor.RED)
+                        .setDisplayName(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTradePrivacyItemName()
+                            .parsePlaceholders(LanguagePlaceholder.create("%privacy%", (targetTrade.isPublic()) ?
+                                ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getPrivacyPublic().getValue() :
+                                ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getPrivacyPrivate().getValue())));
 
-            setItem(slot, ErisInventoryItem.create(separator::build));
+                setItem(slot, ErisInventoryItem.create(separator::build, (event) -> {
+                    targetTrade.setPublic(!targetTrade.isPublic());
+                    targetTrade.updateInventory();
+                }));
+            }
+            else {
+                setItem(slot, ErisInventoryItem.create(separator::build));
+            }
         }
     }
 
