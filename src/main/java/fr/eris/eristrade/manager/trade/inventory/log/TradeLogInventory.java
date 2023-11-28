@@ -13,33 +13,18 @@ public class TradeLogInventory extends ErisInventory {
     }
 
     @Override
-    public void update(HashMap<Integer, ErisInventoryItem> hashMap) {
+    public void setContent() {
 
     }
 
     @Override
-    public boolean onClose() {
-        return false;
+    public void onClose() {
+
     }
 
     @Override
     public void onClick(InventoryClickEvent inventoryClickEvent) {
 
-    }
-
-    @Override
-    public void onInventoryNameChange() {
-
-    }
-
-    @Override
-    public void onInventorySizeChange() {
-
-    }
-
-    @Override
-    public boolean onPreOpen() {
-        return false;
     }
 
     @Override

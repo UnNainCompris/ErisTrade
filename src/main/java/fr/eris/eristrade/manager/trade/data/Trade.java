@@ -48,8 +48,8 @@ public class Trade implements Listener {
         this.recentlyUpdatedItem = new ArrayList<>();
         tradeTask = BukkitTasks.syncTimer(this::tradeTask, 1, 1);
         updateInventory();
-        this.firstPlayer.getTradeInventory().forceOnlyOpen();
-        this.secondPlayer.getTradeInventory().forceOnlyOpen();
+        this.firstPlayer.getTradeInventory().openInventory();
+        this.secondPlayer.getTradeInventory().openInventory();
         Bukkit.getServer().getPluginManager().registerEvents(this, ErisTrade.getInstance());
     }
 
