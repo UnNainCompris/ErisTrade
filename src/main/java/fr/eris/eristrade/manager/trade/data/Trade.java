@@ -34,7 +34,6 @@ import java.util.*;
 public class Trade implements Listener {
 
     @Getter private final TradeData firstPlayer, secondPlayer; // firstPlayer is also the requester of the trade
-    @Setter @Getter private boolean isPublic = true;
 
     private boolean isTradeCanceled, isTradeFinished;
     @Getter private int tickSinceTradeAccept = 0;
@@ -355,8 +354,6 @@ public class Trade implements Listener {
                 LanguagePlaceholder.create("%target%", firstPlayer.getPlayer().getName()));
         firstPlayer.getPlayer().playSound(firstPlayer.getPlayer().getLocation(), Sound.LEVEL_UP, 10000, 10000);
         secondPlayer.getPlayer().playSound(secondPlayer.getPlayer().getLocation(), Sound.LEVEL_UP, 10000, 10000);
-
-        ErisTrade.getTradeManager().logTrade(this);
     }
 
     public void cancelTrade() {

@@ -25,12 +25,6 @@ public class TradeConfig extends Config {
     @Getter @Expose private final ConfigDouble distanceBetweenPlayer = new ConfigDouble(50.0d, "&7-1 for no limit !");
     @Getter @Expose private final ConfigString disabledInWorld = new ConfigString("", "&7Place world name here to disable trade in targeted world ! (Example: \"world;world_the_end\"");
 
-    @Getter @Expose private final ConfigBoolean isTradeLogging = new ConfigBoolean(true, "&7Is trade logging enabled");
-    @Getter @Expose private final ConfigBoolean allowPrivateTrade = new ConfigBoolean(true, "&7Can player do a private trade (this will not be shown in public history)");
-    @Getter @Expose private final ConfigBoolean allowTradeHistory = new ConfigBoolean(true, "&7Is public trade history enable");
-    @Getter @Expose private final ConfigInteger autoDeleteTradeLog = new ConfigInteger(15, "&7The amount of day before a trade will be automatically delete (-1 = never)");
-    @Getter @Expose private final ConfigInteger maxLoggedTrade = new ConfigInteger(250, "&7The amount of global trade that can will be saved in total");
-    @Getter @Expose private final ConfigInteger maxLoggedTradePerPlayer = new ConfigInteger(5, "&7The amount of trade that can will be saved from every player");
     @Override
     public String getConfigFileName() {
         return "tradeConfig";

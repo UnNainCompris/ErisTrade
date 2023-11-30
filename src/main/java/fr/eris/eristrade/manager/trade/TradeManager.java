@@ -4,16 +4,12 @@ import fr.eris.eristrade.ErisTrade;
 import fr.eris.eristrade.manager.trade.commands.TradeExecutor;
 import fr.eris.eristrade.manager.trade.config.TradeConfig;
 import fr.eris.eristrade.manager.trade.data.Trade;
-import fr.eris.eristrade.manager.trade.data.log.TradeHeavyLogData;
-import fr.eris.eristrade.manager.trade.data.log.TradeSoftLogData;
 import fr.eris.eristrade.manager.trade.language.TradeLanguage;
 import fr.eris.erisutils.ErisUtils;
 import fr.eris.erisutils.manager.language.data.LanguagePlaceholder;
 import fr.eris.erisutils.utils.MessageBuilder;
 import fr.eris.erisutils.utils.bukkit.BukkitTasks;
 import fr.eris.erisutils.utils.error.exception.ErisPluginException;
-import fr.eris.erisutils.utils.file.FileUtils;
-import fr.eris.erisutils.utils.file.JsonUtils;
 import fr.eris.erisutils.utils.manager.Manager;
 import fr.eris.erisutils.utils.storage.Tuple;
 import lombok.Getter;
@@ -27,23 +23,14 @@ import java.util.*;
 public class TradeManager extends Manager {
 
     @Getter private final HashMap<Player, Tuple<Long, Player>> tradeRequestCache = new HashMap<>();
-    @Getter private final HashMap<UUID, TradeSoftLogData> softTradeDataCache = new HashMap<>();
-    @Getter private final HashMap<UUID, TradeHeavyLogData> heavyTradeDataCache = new HashMap<>();
     private final List<Trade> currentTrade = new ArrayList<>();
 
     private BukkitTask tradeRequestUpdaterTask;
     private long timeBeforeTradeRequestDelete = 30_000;
 
-    private BukkitTask tradeCacheEmptier;
-
-    public void emptyCache() {
-        softTradeDataCache.clear();
-        heavyTradeDataCache.clear();
-    }
 
     public void start() {
         tradeRequestUpdaterTask = BukkitTasks.asyncTimer(this::tradeRequestUpdater, 3, 3);
-        tradeCacheEmptier = BukkitTasks.asyncTimer(this::emptyCache, 36000, 36000); // 30 min
         try {
             ErisTrade.getConfigManager().loadConfig(TradeConfig.class);
         } catch (ErisPluginException erisPluginException) {
@@ -206,49 +193,5 @@ public class TradeManager extends Manager {
 
     public void removeTrade(Trade trade) {
         currentTrade.remove(trade);
-    }
-
-    public void logTrade(Trade tradeToLog) {
-        Tuple<TradeHeavyLogData, TradeSoftLogData> dataTuple = TradeSoftLogData.buildFromTrade(tradeToLog);
-        TradeHeavyLogData tradeHeavyLogData = dataTuple.getFirst();
-        TradeSoftLogData tradeSoftLogData = dataTuple.getSecond();
-        tradeHeavyLogData.save();
-        tradeSoftLogData.save();
-
-        ErisTrade.getPlayerDataManager().getPlayerData(tradeToLog.getFirstPlayer().getPlayer().getUniqueId()).addSoftTradeId(tradeSoftLogData.getSelfID());
-        ErisTrade.getPlayerDataManager().getPlayerData(tradeToLog.getSecondPlayer().getPlayer().getUniqueId()).addSoftTradeId(tradeSoftLogData.getSelfID());
-    }
-
-    public TradeSoftLogData getSoftTradeData(UUID softTradeDataId) {
-        if(softTradeDataCache.containsKey(softTradeDataId))
-            return softTradeDataCache.get(softTradeDataId);
-        if(!JsonUtils.isExist(FileUtils.getOrCreateFile(FileUtils.getOrCreateFile(FileUtils.ROOT_FOLDER, "tradelog"),
-                "softData"), softTradeDataId.toString())) return null;
-        TradeSoftLogData tradeSoftLogData = JsonUtils.getData(JsonUtils.getOrCreateJson(FileUtils.getOrCreateFile(
-                        FileUtils.getOrCreateFile(FileUtils.ROOT_FOLDER, "tradelog"), "softData"), softTradeDataId.toString()),
-                TradeSoftLogData.class);
-        if(tradeSoftLogData.getDaysPassed() >= ErisTrade.getConfigManager().getConfig(TradeConfig.class).getAutoDeleteTradeLog().getValue()) {
-            ErisTrade.getPlayerDataManager().getPlayerData(tradeSoftLogData.getRequesterUUID()).getPlayerTradeSoftDataID().remove(softTradeDataId);
-            ErisTrade.getPlayerDataManager().getPlayerData(tradeSoftLogData.getRequestedPlayerUUID()).getPlayerTradeSoftDataID().remove(softTradeDataId);
-            JsonUtils.deleteJson(FileUtils.getOrCreateFile(FileUtils.getOrCreateFile(FileUtils.ROOT_FOLDER, "tradelog"), "softData"),
-                    tradeSoftLogData.getSelfID().toString());
-            JsonUtils.deleteJson(FileUtils.getOrCreateFile(FileUtils.getOrCreateFile(FileUtils.ROOT_FOLDER, "tradelog"), "heavyData"),
-                    tradeSoftLogData.getHeavyTradeDataID().toString());
-            return null;
-        }
-        softTradeDataCache.put(softTradeDataId, tradeSoftLogData);
-        return tradeSoftLogData;
-    }
-
-    public TradeHeavyLogData getHeavyTradeData(UUID heavyTradeDataId) {
-        if(heavyTradeDataCache.containsKey(heavyTradeDataId))
-            return heavyTradeDataCache.get(heavyTradeDataId);
-        if(!JsonUtils.isExist(FileUtils.getOrCreateFile(FileUtils.getOrCreateFile(FileUtils.ROOT_FOLDER, "tradelog"),
-                "heavyData"), heavyTradeDataId.toString())) return null;
-        TradeHeavyLogData tradeHeavyLogData = JsonUtils.getData(JsonUtils.getOrCreateJson(FileUtils.getOrCreateFile(
-                FileUtils.getOrCreateFile(FileUtils.ROOT_FOLDER, "tradelog"), "heavyData"), heavyTradeDataId.toString()),
-                TradeHeavyLogData.class);
-        heavyTradeDataCache.put(heavyTradeDataId, tradeHeavyLogData);
-        return tradeHeavyLogData;
     }
 }
