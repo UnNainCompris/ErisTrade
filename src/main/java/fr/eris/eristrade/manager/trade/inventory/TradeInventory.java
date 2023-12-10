@@ -106,6 +106,10 @@ public class TradeInventory extends ErisInventory {
                     ownerTradeData.setCanClose(true);
                     new DoubleInteractiveAsker(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getInputMoney().getValue(), inventoryOwner,
                     (value) -> {
+                        if(ownerTradeData.getTargetTrade().isTradeCanceled() || ownerTradeData.getTargetTrade().isTradeFinished()) {
+                            inventoryOwner.closeInventory();
+                            return;
+                        }
                         if(value == null) value = 0.0d;
                         value = Math.max(0, value);
                         double maxMoneyInTrade = ErisTrade.getConfigManager().getConfig(TradeConfig.class).getMaxMoneyInTrade().getValue();
@@ -138,6 +142,10 @@ public class TradeInventory extends ErisInventory {
                     ownerTradeData.setCanClose(true);
                     new IntegerInteractiveAsker(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getInputExperience().getValue(), inventoryOwner,
                         (value) -> {
+                            if(ownerTradeData.getTargetTrade().isTradeCanceled() || ownerTradeData.getTargetTrade().isTradeFinished()) {
+                                inventoryOwner.closeInventory();
+                                return;
+                            }
                             if(value == null) value = 0;
                             value = Math.max(0, value);
                             int maxExperienceInTrade = ErisTrade.getConfigManager().getConfig(TradeConfig.class).getMaxExperienceInTrade().getValue();

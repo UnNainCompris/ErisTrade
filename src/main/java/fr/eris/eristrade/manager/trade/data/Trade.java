@@ -35,7 +35,7 @@ public class Trade implements Listener {
 
     @Getter private final TradeData firstPlayer, secondPlayer; // firstPlayer is also the requester of the trade
 
-    private boolean isTradeCanceled, isTradeFinished;
+    @Getter private boolean isTradeCanceled, isTradeFinished;
     @Getter private int tickSinceTradeAccept = 0;
     private int tradeTickCounter = 0;
     private BukkitTask tradeTask; // a task that schedule every tick from the start of the trade
