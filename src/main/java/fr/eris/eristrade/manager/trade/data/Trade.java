@@ -352,8 +352,53 @@ public class Trade implements Listener {
                 LanguagePlaceholder.create("%target%", secondPlayer.getPlayer().getName()));
         ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getFinishTrade().sendMessage(secondPlayer.getPlayer(),
                 LanguagePlaceholder.create("%target%", firstPlayer.getPlayer().getName()));
+
+        boolean isExp = ErisTrade.getConfigManager().getConfig(TradeConfig.class).getIsExperienceInTrade().getValue(),
+                isMoney = ImplementationManager.getEconomy() != null && ErisTrade.getConfigManager().getConfig(TradeConfig.class).getIsMoneyInTrade().getValue();
+
+        if(firstPlayer.getTradedExperience() > 0 && firstPlayer.getTradedMoney() > 0) sendReceiveExperienceAndMoney(secondPlayer, firstPlayer);
+        else if(firstPlayer.getTradedExperience() > 0) sendReceiveExperience(secondPlayer, firstPlayer);
+        else if(firstPlayer.getTradedMoney() > 0) sendReceiveMoney(secondPlayer, firstPlayer);
+
+        if(secondPlayer.getTradedExperience() > 0 && secondPlayer.getTradedMoney() > 0) sendReceiveExperienceAndMoney(firstPlayer, secondPlayer);
+        else if(secondPlayer.getTradedExperience() > 0) sendReceiveExperience(firstPlayer, secondPlayer);
+        else if(secondPlayer.getTradedMoney() > 0) sendReceiveMoney(firstPlayer, secondPlayer);
+
+
         firstPlayer.getPlayer().playSound(firstPlayer.getPlayer().getLocation(), Sound.LEVEL_UP, 10000, 10000);
         secondPlayer.getPlayer().playSound(secondPlayer.getPlayer().getLocation(), Sound.LEVEL_UP, 10000, 10000);
+    }
+
+    public void sendReceiveExperience(TradeData messageReceiver, TradeData otherPlayer) {
+        ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getFinishTradeReceiveExperience().sendMessage(messageReceiver.getPlayer(),
+                LanguagePlaceholder.create("%target%", otherPlayer.getPlayer().getName()),
+                LanguagePlaceholder.create("%experience%", String.valueOf(otherPlayer.getTradedExperience())));
+
+        ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getFinishTradeSendExperience().sendMessage(otherPlayer.getPlayer(),
+                LanguagePlaceholder.create("%target%", messageReceiver.getPlayer().getName()),
+                LanguagePlaceholder.create("%experience%", String.valueOf(otherPlayer.getTradedExperience())));
+    }
+
+    public void sendReceiveMoney(TradeData moneyReceiver, TradeData otherPlayer) {
+        ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getFinishTradeReceiveMoney().sendMessage(moneyReceiver.getPlayer(),
+                LanguagePlaceholder.create("%target%", otherPlayer.getPlayer().getName()),
+                LanguagePlaceholder.create("%money%", String.valueOf(otherPlayer.getTradedMoney())));
+
+        ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getFinishTradeSendMoney().sendMessage(otherPlayer.getPlayer(),
+                LanguagePlaceholder.create("%target%", moneyReceiver.getPlayer().getName()),
+                LanguagePlaceholder.create("%money%", String.valueOf(otherPlayer.getTradedMoney())));
+    }
+
+    public void sendReceiveExperienceAndMoney(TradeData bothReceiver, TradeData otherPlayer) {
+        ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getFinishTradeReceiveMoneyAndExperience().sendMessage(bothReceiver.getPlayer(),
+                LanguagePlaceholder.create("%target%", otherPlayer.getPlayer().getName()),
+                LanguagePlaceholder.create("%experience%", String.valueOf(otherPlayer.getTradedExperience())),
+                LanguagePlaceholder.create("%money%", String.valueOf(otherPlayer.getTradedMoney())));
+
+        ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getFinishTradeSendMoneyAndExperience().sendMessage(otherPlayer.getPlayer(),
+                LanguagePlaceholder.create("%target%", bothReceiver.getPlayer().getName()),
+                LanguagePlaceholder.create("%experience%", String.valueOf(otherPlayer.getTradedExperience())),
+                LanguagePlaceholder.create("%money%", String.valueOf(otherPlayer.getTradedMoney())));
     }
 
     public void cancelTrade() {

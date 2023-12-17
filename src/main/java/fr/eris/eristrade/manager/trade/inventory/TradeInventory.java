@@ -172,8 +172,8 @@ public class TradeInventory extends ErisInventory {
                 return ItemBuilder.placeHolders(Material.WOOL, ItemCache.ItemColor.GRAY, false)
                         .setDisplayName(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getCannotTradeNoting().getValue()).build();
             }
-            return ItemBuilder.placeHolders(Material.WOOL, (getTradedPlayerTradeDate().isAcceptTrade()) ? ItemCache.ItemColor.LIME : ItemCache.ItemColor.RED, false)
-                    .setDisplayName((getTradedPlayerTradeDate().isAcceptTrade()) ?
+            return ItemBuilder.placeHolders(Material.WOOL, (getTradedPlayerTradeData().isAcceptTrade()) ? ItemCache.ItemColor.LIME : ItemCache.ItemColor.RED, false)
+                    .setDisplayName((getTradedPlayerTradeData().isAcceptTrade()) ?
                             ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTargetHaveAcceptTrade().parsePlaceholders(
                             LanguagePlaceholder.create("%target%", getTradedPlayer().getName())) :
                             ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTargetDontHaveAcceptTrade().parsePlaceholders(
@@ -184,7 +184,7 @@ public class TradeInventory extends ErisInventory {
     public void updateTradedPlayerTradedMoney() {
         setItem(getInventoryRowAmount() * 9 - 2, ErisInventoryItem.create(() -> new ItemBuilder().setMaterial(Material.GOLD_NUGGET)
                         .setDisplayName(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTradedMoneyItemName().parsePlaceholders(
-                                LanguagePlaceholder.create("%value%", String.valueOf(getTradedPlayerTradeDate().getTradedExperience())))).build()));
+                                LanguagePlaceholder.create("%value%", String.valueOf(getTradedPlayerTradeData().getTradedMoney())))).build()));
     }
 
     public void updateTradedPlayerTradedExperience() {
@@ -192,7 +192,7 @@ public class TradeInventory extends ErisInventory {
         if(inventoryContent.get(slot).getItem().getType() != Material.STAINED_GLASS_PANE) slot--;
         setItem(slot, ErisInventoryItem.create(() -> new ItemBuilder().setMaterial(Material.EXP_BOTTLE)
                 .setDisplayName(ErisTrade.getLanguageManager().getLanguage(TradeLanguage.class).getTradedExperienceItemName().parsePlaceholders(
-                        LanguagePlaceholder.create("%value%", String.valueOf(getTradedPlayerTradeDate().getTradedExperience())))).build()));
+                        LanguagePlaceholder.create("%value%", String.valueOf(getTradedPlayerTradeData().getTradedExperience())))).build()));
     }
 
     private void updateOwnerTradedItem() throws ErisPluginException {
@@ -215,7 +215,7 @@ public class TradeInventory extends ErisInventory {
     }
 
     private void updateTradedPlayerTradedItem() throws ErisPluginException {
-        TradeData tradedPlayerData = getTradedPlayerTradeDate();
+        TradeData tradedPlayerData = getTradedPlayerTradeData();
         for(TradeItem tradeItem : tradedPlayerData.getCurrentTradedItem()) {
             int rawItemSlot = tradedPlayerData.getCurrentTradedItem().indexOf(tradeItem);
             int itemSlot = (int) (5 + (rawItemSlot % 4 + (Math.floor(rawItemSlot / 4f) * 9)));
@@ -227,7 +227,7 @@ public class TradeInventory extends ErisInventory {
         return targetTrade.getOtherDataFromPlayer(inventoryOwner).getPlayer();
     }
 
-    public TradeData getTradedPlayerTradeDate() {
+    public TradeData getTradedPlayerTradeData() {
         return targetTrade.getOtherDataFromPlayer(inventoryOwner);
     }
 

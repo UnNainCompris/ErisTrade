@@ -17,7 +17,13 @@ public class TradeLanguage extends Language {
     @Expose @Getter private LanguageValue targetNotConnected = new LanguageValue("&c[x] &7The player %target% is not connected !");
     @Expose @Getter private LanguageValue targetDoesntSendRequest = new LanguageValue("&c[x] &7%target% doesn't send you (or you sent to him) a trade request !");
     @Expose @Getter private LanguageValue currentTradeIsCanceled = new LanguageValue("&c[x] &7The trade with %target% was canceled !");
-    @Expose @Getter private LanguageValue finishTrade = new LanguageValue("&a[O] &7You successfully finished the trade with %target%! &7(Check /trade log for more information)");
+    @Expose @Getter private LanguageValue finishTrade = new LanguageValue("&a[O] &7You successfully finished the trade with %target%!");
+    @Expose @Getter private LanguageValue finishTradeReceiveExperience = new LanguageValue("&a[O] &7You receive &5%experience%xp &7from %target%!");
+    @Expose @Getter private LanguageValue finishTradeReceiveMoney = new LanguageValue("&a[O] &7You receive &e%money%$ &7from %target%!");
+    @Expose @Getter private LanguageValue finishTradeReceiveMoneyAndExperience = new LanguageValue("&a[O] &7You receive &5%experience%xp &7and &e%money%$ &7from %target%!");
+    @Expose @Getter private LanguageValue finishTradeSendExperience = new LanguageValue("&a[O] &7You send &5%experience%xp &7to %target%!");
+    @Expose @Getter private LanguageValue finishTradeSendMoney = new LanguageValue("&a[O] &7You send &e%money%$ &7to %target%!");
+    @Expose @Getter private LanguageValue finishTradeSendMoneyAndExperience = new LanguageValue("&a[O] &7You send &5%experience%xp &7and &e%money%$ &7to %target%!");
     @Expose @Getter private LanguageValue targetDontHaveEnoughInventorySpace = new LanguageValue("&c[x] &7%target% don't have enough inventory space !");
     @Expose @Getter private LanguageValue selfDontHaveEnoughInventorySpace = new LanguageValue("&c[x] &7You don't have enough inventory space !");
     @Expose @Getter private LanguageValue tradeInventoryName = new LanguageValue("&7Trade with: &6%target%");
